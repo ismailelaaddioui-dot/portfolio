@@ -1,0 +1,28 @@
+.section {
+  width: 100%;
+  height: calc(100vh - var(--nav-height));
+  overflow: hidden;
+  display: flex;
+  align-items: flex-end; /* stick to bottom */
+}
+
+.track {
+  display: flex;
+  flex-direction: row;
+  align-items: flex-end; /* cards flush to bottom */
+  gap: 0;
+  padding: 0;
+  will-change: transform;
+}
+
+.card {
+  flex-shrink: 0;
+  width: 25vw;
+  height: 10vh;
+  position: relative;
+  overflow: hidden;
+}
+
+.img {
+  object-fit: cover;
+}
