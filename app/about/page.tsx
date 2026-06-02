@@ -34,10 +34,10 @@ export default function About() {
           <div className={styles.clients}>
             <p className={styles.sidebarTitle}>Clients &amp; Collaborators</p>
             <p className={styles.clientsList}>
-              M Le Monde · GQ Middle East · Nataal · Boiler Room
-              Soursoup · Artists For Morocco · Somnii Production
-              Touda Ecolodge · Moroccan Guides Travel · Oasis Festival
-              I came for couscous
+              M Le Monde · GQ Middle East · Nataal · Boiler Room · 
+              Moroccan Guides Travel · Soursoup · Artists For Morocco · 
+              Touda Ecolodge · IZZA House Of Friends · Oasis Festival · 
+              Somnii Production · I came for couscous
             </p>
           </div>
 

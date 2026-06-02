@@ -39,6 +39,22 @@
 .lbImgWrap {
   position: fixed;
   z-index: 1001;
+  overflow: hidden; /* clips the off-screen slides of the carousel track */
+}
+
+.lbTrack {
+  display: flex;
+  flex-direction: row;
+  width: 100%;
+  height: 100%;
+  will-change: transform;
+}
+
+.lbSlide {
+  position: relative;
+  flex: 0 0 100%;
+  width: 100%;
+  height: 100%;
 }
 
 .lbImg {

@@ -50,8 +50,15 @@ export default function PersonalWorks() {
   const [lightbox, setLightbox] = useState<number | null>(null)
   const overlayRef = useRef<HTMLDivElement>(null)
   const imgWrapRef = useRef<HTMLDivElement>(null)
-  const originRect = useRef<DOMRect | null>(null)
+  const trackRef = useRef<HTMLDivElement>(null)
   const containerRef = useRef<HTMLDivElement>(null)
+  // Live DOM node for each photo's grid cell, so we can read its rect at any
+  // time (open animates from it; close shrinks back to the *current* one).
+  const cellRefs = useRef<(HTMLDivElement | null)[]>([])
+  const animating = useRef(false)
+  // Mirror of `lightbox` for use inside callbacks without stale closures.
+  const currentRef = useRef<number | null>(null)
+  useEffect(() => { currentRef.current = lightbox }, [lightbox])
 
   useEffect(() => {
     const cells = containerRef.current?.querySelectorAll(`.${styles.cell}`)
@@ -68,28 +75,35 @@ export default function PersonalWorks() {
     )
   }, [])
 
+  const stageTarget = () => {
+    const padding = 32
+    return {
+      left: padding,
+      top: padding,
+      width: window.innerWidth - padding * 2,
+      height: window.innerHeight - padding * 2,
+    }
+  }
+
   const open = useCallback((idx: number, rect: DOMRect) => {
-    originRect.current = rect
+    currentRef.current = idx
     setLightbox(idx)
 
     requestAnimationFrame(() => {
       const wrap = imgWrapRef.current
       const overlay = overlayRef.current
-      if (!wrap || !overlay) return
+      const track = trackRef.current
+      if (!wrap || !overlay || !track) return
 
-      const padding = 32
-      const vw = window.innerWidth
-      const vh = window.innerHeight
-      const targetH = vh - padding * 2
-      const targetW = vw - padding * 2
-      const targetX = padding
-      const targetY = padding
+      // Overlay (blurred backdrop) appears instantly — no crossfade.
+      gsap.set(overlay, { autoAlpha: 1 })
+      // Track jumps straight to the clicked slide (no slide-in on open).
+      gsap.set(track, { xPercent: -idx * 100 })
 
+      // Grow the stage from the thumbnail's position into the centered box.
+      const t = stageTarget()
       gsap.set(wrap, { left: rect.left, top: rect.top, width: rect.width, height: rect.height })
-      gsap.set(overlay, { autoAlpha: 0 })
-
-      gsap.to(wrap, { left: targetX, top: targetY, width: targetW, height: targetH, duration: 1, ease: 'expo.out' })
-      gsap.to(overlay, { autoAlpha: 1, duration: 1, ease: 'expo.out' })
+      gsap.to(wrap, { ...t, duration: 0.8, ease: 'power3.inOut' })
     })
   }, [])
 
@@ -97,30 +111,53 @@ export default function PersonalWorks() {
     const wrap = imgWrapRef.current
     const overlay = overlayRef.current
     if (!wrap || !overlay) return
-    const rect = originRect.current
 
-    const padding = 32
-    const vw = window.innerWidth
-    const vh = window.innerHeight
-    const targetH = vh - padding * 2
-    const targetW = vw - padding * 2
-    const targetX = padding
-    const targetY = padding
+    // Shrink back to the *currently shown* image's grid cell.
+    const cur = currentRef.current
+    const rect = (cur !== null ? cellRefs.current[cur] : null)?.getBoundingClientRect() ?? null
+    const t = stageTarget()
 
+    // Mirror the open animation exactly: same geometry tween (power3.inOut,
+    // 0.8s), and the backdrop disappears instantly at the end — no fade.
     gsap.to(wrap, {
-      left: rect ? rect.left : targetX,
-      top: rect ? rect.top : targetY,
-      width: rect ? rect.width : 0,
-      height: rect ? rect.height : 0,
-      duration: 1,
-      ease: 'expo.inOut',
-      onComplete: () => setLightbox(null),
+      left: rect ? rect.left : t.left,
+      top: rect ? rect.top : t.top,
+      width: rect ? rect.width : t.width,
+      height: rect ? rect.height : t.height,
+      duration: 0.8,
+      ease: 'power3.inOut',
+      onComplete: () => {
+        gsap.set(overlay, { autoAlpha: 0 })
+        setLightbox(null)
+      },
     })
-    gsap.to(overlay, { autoAlpha: 0, duration: 1, ease: 'expo.inOut' })
   }, [])
 
-  const prev = useCallback(() => setLightbox(i => i !== null ? (i - 1 + images.length) % images.length : null), [])
-  const next = useCallback(() => setLightbox(i => i !== null ? (i + 1) % images.length : null), [])
+  // Horizontal carousel slide to a given absolute index.
+  const slideTo = useCallback((target: number) => {
+    const track = trackRef.current
+    if (!track || animating.current) return
+    animating.current = true
+    currentRef.current = target
+    setLightbox(target)
+    gsap.to(track, {
+      xPercent: -target * 100,
+      duration: 0.6,
+      ease: 'power3.inOut',
+      onComplete: () => { animating.current = false },
+    })
+  }, [])
+
+  const prev = useCallback(() => {
+    const i = currentRef.current
+    if (i === null) return
+    slideTo((i - 1 + images.length) % images.length)
+  }, [slideTo])
+  const next = useCallback(() => {
+    const i = currentRef.current
+    if (i === null) return
+    slideTo((i + 1) % images.length)
+  }, [slideTo])
 
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
@@ -143,6 +180,7 @@ export default function PersonalWorks() {
         return (
           <div
             key={i}
+            ref={el => { cellRefs.current[idx] = el }}
             className={styles.cell}
             style={{ paddingBottom: `${(1 / item.ratio) * 100}%` }}
             onClick={e => open(idx, (e.currentTarget as HTMLElement).getBoundingClientRect())}
@@ -156,7 +194,13 @@ export default function PersonalWorks() {
         <div ref={overlayRef} className={styles.lightbox} onClick={close}>
           <button className={styles.lbPrev} onClick={e => { e.stopPropagation(); prev() }}>‹</button>
           <div ref={imgWrapRef} className={styles.lbImgWrap} onClick={e => e.stopPropagation()}>
-            <Image src={images[lightbox].src} alt="" fill className={styles.lbImg} sizes="90vw" priority />
+            <div ref={trackRef} className={styles.lbTrack}>
+              {images.map((im, i) => (
+                <div key={i} className={styles.lbSlide}>
+                  <Image src={im.src} alt="" fill className={styles.lbImg} sizes="90vw" priority={i === lightbox} />
+                </div>
+              ))}
+            </div>
           </div>
           <button className={styles.lbNext} onClick={e => { e.stopPropagation(); next() }}>›</button>
           <button className={styles.lbClose} onClick={close}>✕</button>

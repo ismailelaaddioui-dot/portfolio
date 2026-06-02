@@ -1,5 +1,6 @@
 'use client'
 
+import { useEffect, useRef } from 'react'
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
 import Image from 'next/image'
@@ -7,6 +8,21 @@ import styles from './Navigation.module.css'
 
 export default function Navigation() {
   const pathname = usePathname()
+  const navRef = useRef<HTMLElement>(null)
+
+  // Publish the nav's real rendered height so the homepage slider can size
+  // itself to fill exactly the remaining viewport (calc(100vh - nav-height)).
+  useEffect(() => {
+    const nav = navRef.current
+    if (!nav) return
+    const setVar = () => {
+      document.documentElement.style.setProperty('--nav-height', nav.offsetHeight + 'px')
+    }
+    setVar()
+    const ro = new ResizeObserver(setVar)
+    ro.observe(nav)
+    return () => ro.disconnect()
+  }, [])
 
   const links = [
     { href: '/personal-works', label: 'Gallery' },
@@ -15,7 +31,7 @@ export default function Navigation() {
   ]
 
   return (
-    <nav className={styles.nav}>
+    <nav ref={navRef} className={styles.nav}>
       <Link href="/" className={styles.logo}>
         <Image
           src="/Assets/logo.png"

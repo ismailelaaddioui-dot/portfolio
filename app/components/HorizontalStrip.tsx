@@ -1,30 +1,28 @@
 'use client'
 
 import { useEffect, useRef } from 'react'
-import Image from 'next/image'
-import gsap from 'gsap'
-import { ScrollTrigger } from 'gsap/ScrollTrigger'
 import styles from './HorizontalStrip.module.css'
 
-gsap.registerPlugin(ScrollTrigger)
+const ASPECT = 4 / 5 // card width:height ratio (vertical)
 
 const IMAGES = [
-  { src: '/images/DSCF1187 2.jpg', alt: 'Photo 1' },
-  { src: '/images/Sidi-Black Suit-24 2.jpg', alt: 'Photo 2' },
-  { src: '/images/LDT-54 2.jpg', alt: 'Photo 3' },
-  { src: '/images/Sidi-Atelier-34 2.jpg', alt: 'Photo 4' },
-  { src: '/images/Sidi-Grey Suit-24 2.jpg', alt: 'Photo 5' },
-  { src: '/images/DSCF1792 2.jpg', alt: 'Photo 6' },
-  { src: '/images/Travel-51 1.jpg', alt: 'Photo 7' },
-  { src: '/images/T-182 2.jpg', alt: 'Photo 8' },
-  { src: '/images/DSCF3835 2.jpg', alt: 'Photo 9' },
-  { src: '/images/SXZ-75 2.jpg', alt: 'Photo 10' },
-  { src: '/images/LDT-40 1.jpg', alt: 'Photo 11' },
-  { src: '/images/Sidi-Black Suit-32 2.jpg', alt: 'Photo 12' },
+  '/images/Slider/IMG_7246-Edit 1.jpg',
+  '/images/Slider/SXZ-337 3.jpg',
+  '/images/Slider/Sidi-Black Suit-32 3.jpg',
+  '/images/Slider/Sidi-Grey Suit-24 3.jpg',
+  '/images/Slider/Travel-51 3.jpg',
+  '/images/Slider/fuji-2 1.jpg',
+  '/images/Slider/image 142.jpg',
+  '/images/Slider/image 156.jpg',
+  '/images/Slider/image 159.jpg',
+  '/images/Slider/image 86.jpg',
+  '/images/Slider/img-7 3.jpg',
+  '/images/Slider/intersects 1.jpg',
 ]
 
-// Duplicate for seamless loop
-const LOOPED = [...IMAGES, ...IMAGES]
+// A fixed pool of recyclable card slots. Smaller cards on the right mean more
+// of them fit across the screen, so we keep a generous pool to always cover it.
+const POOL_SIZE = 40
 
 export default function HorizontalStrip() {
   const sectionRef = useRef<HTMLDivElement>(null)
@@ -38,96 +36,121 @@ export default function HorizontalStrip() {
     const track = trackRef.current
     if (!section || !track) return
 
-    const getOneSetWidth = () => track.scrollWidth / 2
+    // Lock the page to a single screen while the homepage slider is mounted.
+    document.body.classList.add('no-scroll')
 
     const cards = Array.from(track.querySelectorAll<HTMLElement>(`.${styles.card}`))
 
-    const getTargetHeight = (card: HTMLElement) => {
-      const vw = window.innerWidth
-      const vh = window.innerHeight
-      const minH = vh * 0.10
-      const maxH = vh * 0.70
-      const rect = card.getBoundingClientRect()
-      const cardCenter = rect.left + rect.width / 2
-      const t = Math.min(1, Math.max(0, 1 - (cardCenter - vw * 0.5) / (vw * 0.5)))
-      return minH + (maxH - minH) * t
-    }
+    // Scale range: smallest on the right, biggest on the left.
+    const MIN_SCALE = 0.35
+    const MAX_SCALE = 1
 
-    const updateScales = () => {
-      cards.forEach((card) => {
-        gsap.set(card, { height: getTargetHeight(card) })
-      })
-    }
+    let baseSlotW = 0 // width of a full-size (scale 1) 4:5 card
 
-    const tick = () => {
-      const oneSetWidth = getOneSetWidth()
-      renderedXRef.current += (targetXRef.current - renderedXRef.current) * 0.03
-
-      if (renderedXRef.current >= oneSetWidth) {
-        renderedXRef.current -= oneSetWidth
-        targetXRef.current -= oneSetWidth
-      }
-      if (renderedXRef.current < 0) {
-        renderedXRef.current += oneSetWidth
-        targetXRef.current += oneSetWidth
-      }
-
-      gsap.set(track, { x: -renderedXRef.current })
-      updateScales()
-      rafRef.current = requestAnimationFrame(tick)
+    const computeLayout = () => {
+      // A full-size card is a 4:5 vertical rectangle filling the section height.
+      const slotH = section.clientHeight
+      baseSlotW = slotH * ASPECT
     }
 
     const onWheel = (e: WheelEvent) => {
       e.preventDefault()
-      targetXRef.current += e.deltaY * 0.35
+      targetXRef.current += e.deltaY * 0.5
     }
 
-    const st = ScrollTrigger.create({
-      trigger: section,
-      start: 'top top',
-      end: '+=5000',
-      pin: true,
-      anticipatePin: 1,
-      onUpdate: (self) => {
-        targetXRef.current += self.getVelocity() * 0.0015
-      },
-    })
+    // Scale as a function of horizontal screen position (0 = left edge,
+    // 1 = right edge): big on the left, small on the right.
+    const scaleAt = (frac: number) => {
+      let f = frac
+      if (f < 0) f = 0
+      else if (f > 1) f = 1
+      return MAX_SCALE + (MIN_SCALE - MAX_SCALE) * f
+    }
 
-    // Intro: cards start at height 0 and rise to their natural position
-    gsap.set(cards, { height: 0 })
-    gsap.to(cards, {
-      height: (i, card) => getTargetHeight(card),
-      duration: 1.4,
-      ease: 'power3.out',
-      stagger: {
-        each: 0.08,
-        from: 'center',
-      },
-      onComplete: () => {
-        section.addEventListener('wheel', onWheel, { passive: false })
-        rafRef.current = requestAnimationFrame(tick)
-      },
-    })
+    // Lay out a recycling window of cards, packed edge-to-edge with no gaps.
+    //
+    // `scroll` is a virtual position measured in base-width units: increasing it
+    // moves content right-to-left. We map it to an integer "lead" image index
+    // plus a fractional offset, then walk our pool of DOM cards left-to-right
+    // across the screen, assigning each the next cyclic image. Because widths
+    // depend on screen position (big left, small right), we accumulate real
+    // pixel widths as we go. Cards that fall off either edge are parked, so the
+    // same pool recycles forever — seamless loop, gap-free.
+    const layoutFrame = () => {
+      const vw = window.innerWidth
+      const scroll = renderedXRef.current / baseSlotW // in card units
+
+      // Index of the image whose left edge sits nearest the screen's left edge,
+      // and how far past it we've scrolled (0..1 of a base width).
+      const lead = Math.floor(scroll)
+      const frac = scroll - lead
+
+      // Start the first visible card slightly off the left edge so there's
+      // never a gap on the left as we scroll.
+      let x = -frac * baseSlotW * scaleAt(0)
+
+      let pool = 0
+      let imgIdx = lead
+      while (x < vw && pool < cards.length) {
+        const card = cards[pool]
+        // Scale from this card's center.
+        const provW = baseSlotW * scaleAt((x + baseSlotW / 2) / vw)
+        const scale = scaleAt((x + provW / 2) / vw)
+        const w = baseSlotW * scale
+
+        const src = IMAGES[((imgIdx % IMAGES.length) + IMAGES.length) % IMAGES.length]
+        const img = card.querySelector('img') as HTMLImageElement
+        if (img && img.getAttribute('data-src-idx') !== String(imgIdx)) {
+          img.src = src
+          img.setAttribute('data-src-idx', String(imgIdx))
+        }
+
+        card.style.display = ''
+        card.style.width = w + 'px'
+        card.style.transform = `translateX(${x}px)`
+        const inner = card.firstElementChild as HTMLElement
+        if (inner) inner.style.height = scale * 100 + '%'
+
+        x += w
+        imgIdx++
+        pool++
+      }
+
+      // Park any unused cards out of view.
+      for (let i = pool; i < cards.length; i++) {
+        cards[i].style.display = 'none'
+      }
+    }
+
+    const tick = () => {
+      renderedXRef.current += (targetXRef.current - renderedXRef.current) * 0.1
+      layoutFrame()
+      rafRef.current = requestAnimationFrame(tick)
+    }
+
+    computeLayout()
+    const onResize = () => computeLayout()
+    window.addEventListener('resize', onResize)
+
+    section.addEventListener('wheel', onWheel, { passive: false })
+    rafRef.current = requestAnimationFrame(tick)
 
     return () => {
-      st.kill()
       cancelAnimationFrame(rafRef.current)
       section.removeEventListener('wheel', onWheel)
+      window.removeEventListener('resize', onResize)
+      document.body.classList.remove('no-scroll')
     }
   }, [])
 
   return (
     <div ref={sectionRef} className={styles.section}>
       <div ref={trackRef} className={styles.track}>
-        {LOOPED.map((img, i) => (
+        {Array.from({ length: POOL_SIZE }).map((_, i) => (
           <div key={i} className={styles.card}>
-            <Image
-              src={img.src}
-              alt={img.alt}
-              fill
-              sizes="25vw"
-              className={styles.img}
-            />
+            <div className={styles.inner}>
+              <img alt="" className={styles.img} />
+            </div>
           </div>
         ))}
       </div>
