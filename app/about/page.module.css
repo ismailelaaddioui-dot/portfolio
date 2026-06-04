@@ -1,36 +1,25 @@
 .container {
-  min-height: calc(100vh - var(--nav-height));
-  padding: 0 4rem 6rem;
+  height: calc(100vh - var(--nav-height));
   display: flex;
   flex-direction: column;
-  justify-content: flex-end;
-}
-
-.grid {
-  display: grid;
-  grid-template-columns: 3fr 6fr 3fr;
-  gap: 1rem;
-  align-items: start;
-  width: 100%;
+  align-items: center;
+  justify-content: center;
+  gap: 0.6rem;
+  overflow: hidden;
+  padding: 0 2rem;
 }
 
 .portraitWrapper {
   position: relative;
-  width: 100%;
-  aspect-ratio: 3/4;
+  aspect-ratio: 1 / 1;
+  width: 160px;
   overflow: hidden;
+  margin-bottom: 0.4rem;
 }
 
 .portrait {
   object-fit: cover;
-}
-
-.bio {
-  display: flex;
-  flex-direction: column;
-  gap: 1.25rem;
-  padding: 0 1rem;
-  align-self: end;
+  object-position: center 30%;
 }
 
 .role {
@@ -40,7 +29,8 @@
   font-style: italic;
   letter-spacing: 0.04em;
   color: rgba(0, 0, 0, 0.5);
-  margin: 0 0 0.25rem;
+  margin: 0 0 0.4rem;
+  text-align: center;
 }
 
 .bioText {
@@ -48,112 +38,36 @@
   line-height: 1.6;
   color: rgba(10, 10, 10, 0.75);
   margin: 0;
+  max-width: 780px;
+  text-align: center;
 }
 
-.sidebar {
+.section {
   display: flex;
   flex-direction: column;
-  justify-content: space-between;
-  padding: 0 1rem;
-  height: 100%;
+  align-items: center;
+  gap: 0.1rem;
+  margin-top: 0.6rem;
 }
 
-.clients {
-  display: flex;
-  flex-direction: column;
-  gap: 0.5rem;
-}
-
-.sidebarTitle {
+.label {
   font-family: 'HelveticaNow', 'Helvetica Neue', Helvetica, Arial, sans-serif;
   font-size: 12px;
   font-weight: 500;
   font-style: italic;
   letter-spacing: 0.04em;
   color: rgba(0, 0, 0, 0.5);
-  margin: 0 0 0.25rem;
-}
-
-.clientsList {
-  font-size: 12px;
-  line-height: 1.6;
-  color: rgba(10, 10, 10, 0.65);
   margin: 0;
-}
-
-.contact {
-  display: flex;
-  flex-direction: column;
-  gap: 1.5rem;
-}
-
-.contactItem {
-  display: flex;
-  flex-direction: column;
-  gap: 0.125rem;
+  text-align: center;
 }
 
 .contactLink {
   font-size: 12px;
   color: rgba(10, 10, 10, 0.75);
   text-decoration: none;
+  text-align: center;
 }
 
 .contactLink:hover {
   color: rgba(10, 10, 10, 1);
-}
-
-@media (max-width: 1024px) {
-  .grid {
-    grid-template-columns: 1fr 1fr;
-    grid-template-rows: auto auto;
-  }
-
-  .portraitWrapper {
-    grid-column: 1;
-    grid-row: 1;
-  }
-
-  .bio {
-    grid-column: 2;
-    grid-row: 1;
-  }
-
-  .sidebar {
-    grid-column: 1 / -1;
-    grid-row: 2;
-    flex-direction: row;
-    gap: 3rem;
-    padding: 1.5rem 1rem 0;
-    border-top: 1px solid rgba(0, 0, 0, 0.08);
-  }
-}
-
-@media (max-width: 768px) {
-  .container {
-    padding: 0 1.5rem 4rem;
-  }
-
-  .grid {
-    grid-template-columns: 1fr;
-  }
-
-  .portraitWrapper {
-    grid-column: 1;
-    grid-row: 1;
-    width: 60vw;
-  }
-
-  .bio {
-    grid-column: 1;
-    grid-row: 2;
-    padding: 0;
-  }
-
-  .sidebar {
-    grid-column: 1;
-    grid-row: 3;
-    flex-direction: column;
-    padding: 1.5rem 0 0;
-  }
 }
