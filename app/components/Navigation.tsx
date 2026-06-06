@@ -33,7 +33,9 @@ export default function Navigation() {
     const nav = navRef.current
     if (!nav) return
     const setVar = () => {
-      document.documentElement.style.setProperty('--nav-height', nav.offsetHeight + 'px')
+      // Use the exact fractional height (rect), not offsetHeight, which rounds
+      // to an integer and can leave a sub-pixel gap below the slider.
+      document.documentElement.style.setProperty('--nav-height', nav.getBoundingClientRect().height + 'px')
     }
     setVar()
     const ro = new ResizeObserver(setVar)

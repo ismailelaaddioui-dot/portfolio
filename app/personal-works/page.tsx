@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useRef, useCallback, useEffect } from 'react'
+import { useState, useRef, useCallback, useEffect, useLayoutEffect } from 'react'
 import Image from 'next/image'
 import gsap from 'gsap'
 import styles from './page.module.css'
@@ -64,25 +64,32 @@ function buildEmptySlots(imageCount: number): Set<number> {
   return slots
 }
 
-// Shuffle order + gaps once at module load — stable across re-renders (so the
-// lightbox/cell indices stay consistent), reshuffled on each full page load.
-const shuffledImages = shuffle(images)
+type Img = typeof images[number]
 
-function buildGrid() {
-  const emptySlots = buildEmptySlots(shuffledImages.length)
-  const grid: (typeof images[0] | null)[] = []
+// Interleave images with empty gap cells into the final grid layout.
+function buildGrid(imgs: Img[], emptySlots: Set<number>): (Img | null)[] {
+  const grid: (Img | null)[] = []
   let imgIdx = 0, slot = 0
-  while (imgIdx < shuffledImages.length) {
-    grid.push(emptySlots.has(slot) ? null : shuffledImages[imgIdx++])
+  while (imgIdx < imgs.length) {
+    grid.push(emptySlots.has(slot) ? null : imgs[imgIdx++])
     slot++
   }
   return grid
 }
 
-const grid = buildGrid()
+// Deterministic default layout (no randomness) so the server-rendered HTML and
+// the client's first render match — avoids a hydration mismatch. The shuffle +
+// random gaps are applied on the client after mount (see useEffect below).
+const DEFAULT_EMPTY_SLOTS = new Set([2, 5, 9, 13, 17, 20, 23, 27, 30, 34, 37, 41])
 
 export default function PersonalWorks() {
   const [lightbox, setLightbox] = useState<number | null>(null)
+  // Start with the deterministic order/layout (matches SSR), then randomize on
+  // the client after mount so server and client first-render agree.
+  const [orderedImages, setOrderedImages] = useState<Img[]>(images)
+  const [grid, setGrid] = useState<(Img | null)[]>(() =>
+    buildGrid(images, DEFAULT_EMPTY_SLOTS)
+  )
   const overlayRef = useRef<HTMLDivElement>(null)
   const imgWrapRef = useRef<HTMLDivElement>(null)
   const trackRef = useRef<HTMLDivElement>(null)
@@ -95,20 +102,38 @@ export default function PersonalWorks() {
   const currentRef = useRef<number | null>(null)
   useEffect(() => { currentRef.current = lightbox }, [lightbox])
 
+  // Randomize order + gap layout on the client only, before the browser paints
+  // (useLayoutEffect) — so the deterministic SSR order used for hydration is
+  // swapped for the shuffled one without any visible flash of the default grid.
+  const shuffled = useRef(false)
+  useLayoutEffect(() => {
+    if (shuffled.current) return
+    shuffled.current = true
+    const next = shuffle(images)
+    setOrderedImages(next)
+    setGrid(buildGrid(next, buildEmptySlots(next.length)))
+  }, [])
+
+  // Masked reveal: each image wipes up from below (its cell clips the overflow)
+  // into view, one after another with a small gap. Runs once the shuffled grid
+  // has committed. Sets both the hidden start and the visible end in JS so the
+  // images are never left stuck off-screen if anything reorders mid-flight.
+  const revealed = useRef(false)
   useEffect(() => {
-    const cells = containerRef.current?.querySelectorAll(`.${styles.cell}`)
-    if (!cells) return
-    gsap.fromTo(cells,
-      { opacity: 0, scale: 0.92 },
+    if (revealed.current || !shuffled.current) return
+    const imgs = containerRef.current?.querySelectorAll(`.${styles.imageInner}`)
+    if (!imgs?.length) return
+    revealed.current = true
+    gsap.fromTo(imgs,
+      { yPercent: 100 },
       {
-        opacity: 1,
-        scale: 1,
-        duration: 0.7,
-        ease: 'expo.out',
-        stagger: { amount: 1.2, from: 'start' },
+        yPercent: 0,
+        duration: 1,
+        ease: 'power3.out',
+        stagger: 0.08, // small timing gap between each image
       }
     )
-  }, [])
+  }, [grid])
 
   const stageTarget = () => {
     const padding = 32
@@ -186,12 +211,12 @@ export default function PersonalWorks() {
   const prev = useCallback(() => {
     const i = currentRef.current
     if (i === null) return
-    slideTo((i - 1 + shuffledImages.length) % shuffledImages.length)
+    slideTo((i - 1 + orderedImages.length) % orderedImages.length)
   }, [slideTo])
   const next = useCallback(() => {
     const i = currentRef.current
     if (i === null) return
-    slideTo((i + 1) % shuffledImages.length)
+    slideTo((i + 1) % orderedImages.length)
   }, [slideTo])
 
   useEffect(() => {
@@ -220,7 +245,9 @@ export default function PersonalWorks() {
             style={{ paddingBottom: `${(1 / item.ratio) * 100}%` }}
             onClick={e => open(idx, (e.currentTarget as HTMLElement).getBoundingClientRect())}
           >
-            <Image src={item.src} alt="" fill className={styles.image} sizes="(max-width: 768px) 50vw, 17vw" />
+            <div className={styles.imageInner}>
+              <Image src={item.src} alt="" fill className={styles.image} sizes="(max-width: 768px) 50vw, 17vw" />
+            </div>
           </div>
         )
       })}
@@ -230,7 +257,7 @@ export default function PersonalWorks() {
           <button className={styles.lbPrev} onClick={e => { e.stopPropagation(); prev() }}>‹</button>
           <div ref={imgWrapRef} className={styles.lbImgWrap} onClick={e => e.stopPropagation()}>
             <div ref={trackRef} className={styles.lbTrack}>
-              {shuffledImages.map((im, i) => (
+              {orderedImages.map((im, i) => (
                 <div key={i} className={styles.lbSlide}>
                   <Image src={im.src} alt="" fill className={styles.lbImg} sizes="90vw" priority={i === lightbox} />
                 </div>

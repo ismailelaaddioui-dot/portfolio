@@ -9,10 +9,22 @@
   position: relative;
   width: 100%;
   cursor: pointer;
+  /* Acts as the mask for the load reveal: the image slides up from below and
+     this clips it until it's fully in view. */
+  overflow: hidden;
 }
 
 .cell:hover .image {
   opacity: 0.8;
+}
+
+/* Full-cover wrapper for the fill image. This (a plain div, free of Next's
+   inline styles) is what the load reveal animates: GSAP starts it below the
+   cell (clipped by the cell's overflow) and wipes it up to yPercent: 0. No base
+   transform here — if JS doesn't run, the image is simply visible. */
+.imageInner {
+  position: absolute;
+  inset: 0;
 }
 
 .image {
