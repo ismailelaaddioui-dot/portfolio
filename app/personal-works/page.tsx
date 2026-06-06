@@ -114,10 +114,11 @@ export default function PersonalWorks() {
     setGrid(buildGrid(next, buildEmptySlots(next.length)))
   }, [])
 
-  // Masked reveal: each image wipes up from below (its cell clips the overflow)
-  // into view, one after another with a small gap. Runs once the shuffled grid
-  // has committed. Sets both the hidden start and the visible end in JS so the
-  // images are never left stuck off-screen if anything reorders mid-flight.
+  // Masked reveal: each image stays perfectly still while a mask edge slides up
+  // over it, uncovering it in place — one after another with a small gap. Runs
+  // once the shuffled grid has committed. Sets both the hidden start and the
+  // fully-visible end in JS (via clip-path) so images are never left clipped if
+  // anything reorders mid-flight.
   const revealed = useRef(false)
   useEffect(() => {
     if (revealed.current || !shuffled.current) return
@@ -125,9 +126,11 @@ export default function PersonalWorks() {
     if (!imgs?.length) return
     revealed.current = true
     gsap.fromTo(imgs,
-      { yPercent: 100 },
+      // Start: clipped to nothing (top edge sits at the bottom) → image hidden.
+      { clipPath: 'inset(100% 0 0 0)' },
       {
-        yPercent: 0,
+        // End: no clip → image fully shown. The top edge wipes up to reveal it.
+        clipPath: 'inset(0% 0 0 0)',
         duration: 1,
         ease: 'power3.out',
         stagger: 0.08, // small timing gap between each image

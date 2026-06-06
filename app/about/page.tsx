@@ -54,7 +54,7 @@ export default function About() {
         <p className={styles.label}>Clients &amp; Collaborators</p>
         <p className={styles.bioText}>
           M Le Monde · GQ Middle East · Nataal · Boiler Room · Soursoup · Moroccan Guides Travel ·<br />
-          Artists For Morocco · Somnii Production · Touda Ecolodge · Oasis Festival ·<br />
+          Artists For Morocco · Somnii Production · Touda Ecolodge · Izza House Of Friends · Oasis Festival ·<br />
           I came for couscous
         </p>
       </div>

@@ -9,8 +9,6 @@
   position: relative;
   width: 100%;
   cursor: pointer;
-  /* Acts as the mask for the load reveal: the image slides up from below and
-     this clips it until it's fully in view. */
   overflow: hidden;
 }
 
@@ -19,9 +17,10 @@
 }
 
 /* Full-cover wrapper for the fill image. This (a plain div, free of Next's
-   inline styles) is what the load reveal animates: GSAP starts it below the
-   cell (clipped by the cell's overflow) and wipes it up to yPercent: 0. No base
-   transform here — if JS doesn't run, the image is simply visible. */
+   inline styles) is what the load reveal animates: the image stays perfectly
+   still while GSAP slides this wrapper's clip-path edge up from the bottom,
+   uncovering the image in place. No base clip here — if JS doesn't run, the
+   image is simply fully visible. */
 .imageInner {
   position: absolute;
   inset: 0;
@@ -110,6 +109,11 @@
 
 @media (max-width: 768px) {
   .container {
-    grid-template-columns: repeat(2, 1fr);
+    grid-template-columns: 1fr;
+  }
+
+  /* No scattered gaps on mobile — single column of images, no empty cells. */
+  .emptyCell {
+    display: none;
   }
 }
