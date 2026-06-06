@@ -21,7 +21,6 @@ const images = [
   { src: '/images/Archive/Ismail-El-Aaddioui-11.jpg', ratio: 4 / 5 },
   { src: '/images/Archive/Ismail-El-Aaddioui-12.jpg', ratio: 5 / 4 },
   { src: '/images/Archive/Ismail-El-Aaddioui-13.jpg', ratio: 4 / 3 },
-  { src: '/images/Archive/Ismail-El-Aaddioui-14.jpg', ratio: 4 / 5 },
   { src: '/images/Archive/Ismail-El-Aaddioui-15.jpg', ratio: 3 / 2 },
   { src: '/images/Archive/Ismail-El-Aaddioui-16.jpg', ratio: 4 / 5 },
   { src: '/images/Archive/Nekhla 3.jpg', ratio: 3 / 4 },
