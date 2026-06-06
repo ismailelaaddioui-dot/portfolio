@@ -193,26 +193,31 @@ export default function Commissions() {
     }
   }
 
-  // Stagger the titles upward (bottom → top), reverse on close.
-  const animateTitles = (out: boolean) => {
-    const els = titleRefs.current.filter(Boolean) as HTMLLIElement[]
-    if (out) {
-      gsap.to(els, {
-        yPercent: -120,
-        opacity: 0,
-        duration: 0.5,
-        ease: 'power3.inOut',
-        stagger: { each: 0.05, from: 'end' },
-      })
-    } else {
-      gsap.to(els, {
-        yPercent: 0,
-        opacity: 1,
-        duration: 0.5,
-        ease: 'power3.out',
-        stagger: { each: 0.05, from: 'start' },
-      })
-    }
+  // Titles + nav/logos animate as ONE group. DOM order is nav (top of page)
+  // then titles (below); for a unified bottom → top rise the titles lead and
+  // the nav comes in last. Same set fans out top → bottom on open.
+  const groupEls = () => {
+    const titles = titleRefs.current.filter(Boolean) as HTMLElement[]
+    const nav = Array.from(document.querySelectorAll<HTMLElement>('[data-nav-item]'))
+    // Ordered bottom → top: titles (lower on the page) first, nav (top) last.
+    // With stagger from: 'start' this plays as one continuous upward sweep.
+    return [...titles, ...nav]
+  }
+
+  // On open: stagger the titles + nav up and out (bottom → top sweep). On close
+  // they aren't animated back — the closing image mask simply uncovers them in
+  // place (see close()).
+  const animateTitlesOut = () => {
+    const els = groupEls()
+    if (!els.length) return
+    gsap.to(els, {
+      yPercent: -120,
+      opacity: 0,
+      duration: 0.5,
+      ease: 'power3.inOut',
+      // Array is bottom → top; 'start' sweeps from the bottom title upward.
+      stagger: { each: 0.05, from: 'start' },
+    })
   }
 
   const open = useCallback((workIdx: number) => {
@@ -225,7 +230,7 @@ export default function Commissions() {
     slideRef.current = 0
     setOpenWork(workIdx)
     setSlide(0)
-    animateTitles(true)
+    animateTitlesOut()
 
     requestAnimationFrame(() => {
       const wrap = imgWrapRef.current
@@ -243,24 +248,33 @@ export default function Commissions() {
   const close = useCallback(() => {
     const wrap = imgWrapRef.current
     const overlay = overlayRef.current
-    if (!wrap || !overlay) return
+    const track = trackRef.current
+    if (!wrap || !overlay || !track) return
 
-    const workIdx = openWorkRef.current
-    const previewEl = workIdx !== null ? previewRefs.current[workIdx] : null
-    const rect = previewEl?.getBoundingClientRect()
-    const t = stageTarget()
+    // Titles + nav are already in their final resting state underneath — the
+    // closing mask simply uncovers them, so put them there instantly (no
+    // stagger-in). opacity:1 is exactly 1 → no stacking context, so the titles'
+    // mix-blend-mode keeps working.
+    const els = groupEls()
+    gsap.set(els, { opacity: 1, clearProps: 'transform' })
 
-    animateTitles(false)
+    // Pin the track to the wrap's current pixel size so the image holds still
+    // while the wrap (overflow: hidden) collapses over it like a closing mask.
+    const r = wrap.getBoundingClientRect()
+    gsap.set(track, { width: r.width, height: r.height })
 
+    // Fade the blurred backdrop out alongside the mask wipe.
+    gsap.to(overlay, { opacity: 0, duration: 0.6, ease: 'power2.inOut' })
+
+    // Mask closes bottom → top: top edge holds, bottom edge rises to meet it,
+    // wiping the still image away upward and revealing the titles/nav beneath.
     gsap.to(wrap, {
-      left: rect ? rect.left : t.left,
-      top: rect ? rect.top : t.top,
-      width: rect ? rect.width : t.width,
-      height: rect ? rect.height : t.height,
-      duration: 0.8,
+      height: 0,
+      duration: 0.6,
       ease: 'power3.inOut',
       onComplete: () => {
-        gsap.set(overlay, { autoAlpha: 0 })
+        gsap.set(overlay, { autoAlpha: 0, clearProps: 'opacity' })
+        gsap.set(track, { clearProps: 'width,height' })
         setOpenWork(null)
       },
     })
@@ -340,7 +354,7 @@ export default function Commissions() {
                 onMouseLeave={() => setHoveredIndex(null)}
                 onClick={() => open(wi)}
               >
-                <span className={styles.title}>{work.title}</span>
+                <span className={`${styles.title} ${isHovered ? styles.titleHovered : ''}`}>{work.title}</span>
               </li>
             )
           })}

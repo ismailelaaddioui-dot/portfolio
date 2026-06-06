@@ -1,18 +1,22 @@
 .container {
-  height: calc(100vh - var(--nav-height));
+  min-height: calc(100vh - var(--nav-height));
   display: flex;
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  gap: 0.6rem;
-  overflow: hidden;
-  padding: 0 2rem;
+  gap: 1.6rem;
+  padding: 0 2rem 2rem;
+}
+
+.reveal {
+  opacity: 0;
 }
 
 .portraitWrapper {
   position: relative;
   aspect-ratio: 1 / 1;
   width: 160px;
+  flex-shrink: 0;
   overflow: hidden;
   margin-bottom: 0.4rem;
 }
@@ -22,24 +26,19 @@
   object-position: center 30%;
 }
 
-.role {
-  font-family: 'HelveticaNow', 'Helvetica Neue', Helvetica, Arial, sans-serif;
-  font-size: 12px;
-  font-weight: 500;
-  font-style: italic;
-  letter-spacing: 0.04em;
-  color: rgba(0, 0, 0, 0.5);
-  margin: 0 0 0.4rem;
-  text-align: center;
-}
-
 .bioText {
   font-size: 12px;
-  line-height: 1.6;
+  line-height: 14px;
   color: rgba(10, 10, 10, 0.75);
   margin: 0;
   max-width: 780px;
   text-align: center;
+}
+
+/* Space between stacked bio paragraphs, while the section's own gap keeps the
+   title → first-paragraph distance identical to the other sections. */
+.bioText + .bioText {
+  margin-top: 0.9rem;
 }
 
 .section {
@@ -47,7 +46,13 @@
   flex-direction: column;
   align-items: center;
   gap: 0.1rem;
-  margin-top: 0.6rem;
+}
+
+.contactRow {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 1.6rem;
 }
 
 .label {
@@ -55,8 +60,8 @@
   font-size: 12px;
   font-weight: 500;
   font-style: italic;
-  letter-spacing: 0.04em;
-  color: rgba(0, 0, 0, 0.5);
+  letter-spacing: 0;
+  color: #000000;
   margin: 0;
   text-align: center;
 }

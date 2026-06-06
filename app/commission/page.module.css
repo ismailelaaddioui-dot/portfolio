@@ -65,12 +65,14 @@
   display: block;
   padding: 0.05rem 0;
   cursor: pointer;
-  transition: opacity 0.4s ease-out;
+  /* Symmetric easing so the dim fades in (hover) and out (hover off) feel
+     identical in both directions. */
+  transition: opacity 0.4s ease-in-out;
   position: relative;
 }
 
 .dimmed {
-  opacity: 0.15;
+  opacity: 0.5;
 }
 
 .title {
@@ -80,16 +82,17 @@
   letter-spacing: -0.02em;
   line-height: 1.15;
   display: inline-block;
-  /* Always white + difference. Inside the stage (isolated stacking context
-     with a white backdrop) this renders as black over the page, and inverts
-     to the image's complementary colors wherever a preview image sits behind
-     it. Because the image fades in/out over 0.4s, the inversion crossfades
-     smoothly with no class swap on hover. */
+  /* Default: plain black text, no blend. Only the hovered title inverts. */
+  color: #000;
+}
+
+/* Only the hovered title blends with the preview image behind it. White +
+   difference: over the white stage backdrop it reads black, and inverts to the
+   image's complementary colors wherever the visible preview sits behind it.
+   The preview fades in/out over 0.4s, so the inversion crossfades smoothly. */
+.titleHovered {
   color: #fff;
   mix-blend-mode: difference;
-  /* Match the preview image's 0.4s ease-out fade so the title's change stays
-     in lockstep with the image appearing/disappearing. */
-  transition: color 0.4s ease-out;
 }
 
 /* ── Lightbox ── */

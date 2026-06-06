@@ -1,5 +1,5 @@
 .nav {
-  padding: 2rem 3rem 1.5rem;
+  padding: 2rem 3rem 32px;
   display: flex;
   flex-direction: column;
   align-items: center;
@@ -8,8 +8,10 @@
 
 .logo {
   display: flex;
+  flex-direction: column;
   align-items: center;
   justify-content: center;
+  gap: 1rem;
   transition: opacity 0.3s ease;
   text-decoration: none;
 }
@@ -18,10 +20,20 @@
   opacity: 0.65;
 }
 
-.logoImg {
+.logoLatin {
   width: auto;
-  height: 90px;
+  height: 25px;
   object-fit: contain;
+}
+
+.logoArabic {
+  width: auto;
+  height: 43px;
+  object-fit: contain;
+}
+
+.reveal {
+  opacity: 0;
 }
 
 .navList {
@@ -61,8 +73,12 @@
     gap: 1rem;
   }
 
-  .logoImg {
-    height: 35px;
+  .logoLatin {
+    height: 32px;
+  }
+
+  .logoArabic {
+    height: 20px;
   }
 
   .navList {

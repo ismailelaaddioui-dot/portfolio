@@ -6,39 +6,74 @@ import gsap from 'gsap'
 import styles from './page.module.css'
 
 const images = [
-  { src: '/images/DSCF1187 2.jpg', ratio: 4 / 5 },
-  { src: '/images/Travel-51 1.jpg', ratio: 2 / 3 },
-  { src: '/images/img-7 2.jpg', ratio: 1 / 1 },
-  { src: '/images/Sidi-Black Suit-24 2.jpg', ratio: 2 / 3 },
-  { src: '/images/DSCF1792 2.jpg', ratio: 4 / 5 },
-  { src: '/images/SXZ-75 2.jpg', ratio: 3 / 4 },
-  { src: '/images/LDT-54 2.jpg', ratio: 4 / 5 },
-  { src: '/images/Sidi-Atelier-34 2.jpg', ratio: 3 / 4 },
-  { src: '/images/img-10 2.jpg', ratio: 1 / 1 },
-  { src: '/images/T-182 2.jpg', ratio: 4 / 5 },
-  { src: '/images/Sidi-Grey Suit-24 2.jpg', ratio: 2 / 3 },
-  { src: '/images/DSCF3835 2.jpg', ratio: 3 / 2 },
-  { src: '/images/img-8 2.jpg', ratio: 4 / 5 },
-  { src: '/images/Sidi-Black Suit-32 2.jpg', ratio: 2 / 3 },
-  { src: '/images/LDT-40 1.jpg', ratio: 3 / 4 },
-  { src: '/images/Sidi-Grey Suit-10 2.jpg', ratio: 4 / 5 },
-  { src: '/images/SXZ-309 2.jpg', ratio: 2 / 3 },
-  { src: '/images/img-19 2.jpg', ratio: 1 / 1 },
-  { src: '/images/Sidi-Atelier-5 2.jpg', ratio: 4 / 5 },
-  { src: '/images/DSCF3839 2.jpg', ratio: 3 / 4 },
-  { src: '/images/LDT-26 2.jpg', ratio: 2 / 3 },
-  { src: '/images/Sidi-Black Suit-25 2.jpg', ratio: 3 / 4 },
-  { src: '/images/SXZ-337 2.jpg', ratio: 2 / 3 },
-  { src: '/images/Sidi-Grey Suit-2 11.jpg', ratio: 4 / 5 },
+  { src: '/images/Archive/3od-2 4.jpg', ratio: 4 / 3 },
+  { src: '/images/Archive/IMG_4221 2.jpg', ratio: 3 / 4 },
+  { src: '/images/Archive/Ismail-El-Aaddioui-1.jpg', ratio: 5 / 4 },
+  { src: '/images/Archive/Ismail-El-Aaddioui-2.jpg', ratio: 4 / 5 },
+  { src: '/images/Archive/Ismail-El-Aaddioui-3.jpg', ratio: 4 / 5 },
+  { src: '/images/Archive/Ismail-El-Aaddioui-4.jpg', ratio: 5 / 4 },
+  { src: '/images/Archive/Ismail-El-Aaddioui-5.jpg', ratio: 5 / 4 },
+  { src: '/images/Archive/Ismail-El-Aaddioui-6.jpg', ratio: 4 / 5 },
+  { src: '/images/Archive/Ismail-El-Aaddioui-7.jpg', ratio: 5 / 4 },
+  { src: '/images/Archive/Ismail-El-Aaddioui-8.jpg', ratio: 4 / 5 },
+  { src: '/images/Archive/Ismail-El-Aaddioui-9.jpg', ratio: 4 / 3 },
+  { src: '/images/Archive/Ismail-El-Aaddioui-10.jpg', ratio: 4 / 3 },
+  { src: '/images/Archive/Ismail-El-Aaddioui-11.jpg', ratio: 4 / 5 },
+  { src: '/images/Archive/Ismail-El-Aaddioui-12.jpg', ratio: 5 / 4 },
+  { src: '/images/Archive/Ismail-El-Aaddioui-13.jpg', ratio: 4 / 3 },
+  { src: '/images/Archive/Ismail-El-Aaddioui-14.jpg', ratio: 4 / 5 },
+  { src: '/images/Archive/Ismail-El-Aaddioui-15.jpg', ratio: 3 / 2 },
+  { src: '/images/Archive/Ismail-El-Aaddioui-16.jpg', ratio: 4 / 5 },
+  { src: '/images/Archive/Nekhla 3.jpg', ratio: 3 / 4 },
+  { src: '/images/Archive/image 108.jpg', ratio: 5 / 4 },
+  { src: '/images/Archive/image 120.jpg', ratio: 4 / 5 },
+  { src: '/images/Archive/image 137.jpg', ratio: 4 / 5 },
+  { src: '/images/Archive/image 150.jpg', ratio: 3 / 4 },
+  { src: '/images/Archive/image 159.jpg', ratio: 4 / 5 },
+  { src: '/images/Archive/image 234.jpg', ratio: 5 / 4 },
+  { src: '/images/Archive/image 83.jpg', ratio: 5 / 4 },
+  { src: '/images/Archive/image 92.jpg', ratio: 1 / 1 },
+  { src: '/images/Archive/image 93.jpg', ratio: 5 / 4 },
+  { src: '/images/Archive/image 96.jpg', ratio: 5 / 4 },
+  { src: '/images/Archive/inter23.jpg', ratio: 3 / 4 },
+  { src: '/images/Archive/inter24 1.jpg', ratio: 3 / 4 },
+  { src: '/images/Archive/intersects 4.jpg', ratio: 3 / 4 },
 ]
 
-const EMPTY_SLOTS = new Set([2, 5, 9, 13, 17, 20, 23, 27, 30])
+// Fisher–Yates shuffle (returns a new array, leaves the source untouched).
+function shuffle<T>(arr: T[]): T[] {
+  const a = [...arr]
+  for (let i = a.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1))
+    ;[a[i], a[j]] = [a[j], a[i]]
+  }
+  return a
+}
+
+// Scatter empty cells through the grid: roughly one gap per `EMPTY_EVERY`
+// slots, jittered so no two layouts line up. Never an empty in slot 0.
+function buildEmptySlots(imageCount: number): Set<number> {
+  const EMPTY_EVERY = 3
+  const slots = new Set<number>()
+  let slot = 2 + Math.floor(Math.random() * 2)
+  // Leave room for `imageCount` real cells plus the gaps we insert.
+  while (slot < imageCount + slots.size + 2) {
+    slots.add(slot)
+    slot += EMPTY_EVERY + Math.floor(Math.random() * 2) // 3–4 apart
+  }
+  return slots
+}
+
+// Shuffle order + gaps once at module load — stable across re-renders (so the
+// lightbox/cell indices stay consistent), reshuffled on each full page load.
+const shuffledImages = shuffle(images)
 
 function buildGrid() {
+  const emptySlots = buildEmptySlots(shuffledImages.length)
   const grid: (typeof images[0] | null)[] = []
   let imgIdx = 0, slot = 0
-  while (imgIdx < images.length) {
-    grid.push(EMPTY_SLOTS.has(slot) ? null : images[imgIdx++])
+  while (imgIdx < shuffledImages.length) {
+    grid.push(emptySlots.has(slot) ? null : shuffledImages[imgIdx++])
     slot++
   }
   return grid
@@ -151,12 +186,12 @@ export default function PersonalWorks() {
   const prev = useCallback(() => {
     const i = currentRef.current
     if (i === null) return
-    slideTo((i - 1 + images.length) % images.length)
+    slideTo((i - 1 + shuffledImages.length) % shuffledImages.length)
   }, [slideTo])
   const next = useCallback(() => {
     const i = currentRef.current
     if (i === null) return
-    slideTo((i + 1) % images.length)
+    slideTo((i + 1) % shuffledImages.length)
   }, [slideTo])
 
   useEffect(() => {
@@ -195,7 +230,7 @@ export default function PersonalWorks() {
           <button className={styles.lbPrev} onClick={e => { e.stopPropagation(); prev() }}>‹</button>
           <div ref={imgWrapRef} className={styles.lbImgWrap} onClick={e => e.stopPropagation()}>
             <div ref={trackRef} className={styles.lbTrack}>
-              {images.map((im, i) => (
+              {shuffledImages.map((im, i) => (
                 <div key={i} className={styles.lbSlide}>
                   <Image src={im.src} alt="" fill className={styles.lbImg} sizes="90vw" priority={i === lightbox} />
                 </div>
