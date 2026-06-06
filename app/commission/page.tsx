@@ -8,13 +8,15 @@ import gsap from 'gsap'
 const commissionWorks = [
   {
     title: 'Khadija Ouarzaziya x Somnii',
-    ratio: 1661 / 2214,
+    // Cover is KW-5 (1500x2000) so the title's difference blend reads well
+    // over it.
+    ratio: 1500 / 2000,
     images: [
+      '/images/Khadija Ouarzaziya/KW-5.jpg',
       '/images/Khadija Ouarzaziya/KW-1.jpg',
       '/images/Khadija Ouarzaziya/KW-2.jpg',
       '/images/Khadija Ouarzaziya/KW-3.jpg',
       '/images/Khadija Ouarzaziya/KW-4.jpg',
-      '/images/Khadija Ouarzaziya/KW-5.jpg',
       '/images/Khadija Ouarzaziya/KW-6.jpg',
       '/images/Khadija Ouarzaziya/KW-7.jpg',
       '/images/Khadija Ouarzaziya/KW-8.jpg',
@@ -105,8 +107,11 @@ const commissionWorks = [
   },
   {
     title: 'Sidi Tailoring',
-    ratio: 1344 / 1075,
+    // Cover is Sidi-Grey Suit-16 (darkest, 1032x1289) for a brighter
+    // difference-blend title.
+    ratio: 1032 / 1289,
     images: [
+      '/images/SIDI/Sidi-Grey Suit-16 2.jpg',
       '/images/SIDI/DSCF3241 2.jpg',
       '/images/SIDI/DSCF3313 2.jpg',
       '/images/SIDI/Sidi-Beige Suit-50 2.jpg',
@@ -117,7 +122,6 @@ const commissionWorks = [
       '/images/SIDI/Sidi-Grey Suit-2 11.jpg',
       '/images/SIDI/Sidi-Grey Suit-10 2.jpg',
       '/images/SIDI/Sidi-Grey Suit-12 2.jpg',
-      '/images/SIDI/Sidi-Grey Suit-16 2.jpg',
       '/images/SIDI/Sidi-Grey Suit-24 2.jpg',
       '/images/SIDI/Sidi-Grey Suit-39 2.jpg',
       '/images/SIDI/Sidi-Grey Suit-41 2.jpg',
@@ -126,8 +130,11 @@ const commissionWorks = [
   },
   {
     title: 'Folks and Clans',
-    ratio: 1670 / 1335,
+    // Cover is F&C-13 (darkest, 1335x1670) for a brighter difference-blend
+    // title.
+    ratio: 1335 / 1670,
     images: [
+      '/images/Folks & Clans/F&C-13.jpg',
       '/images/Folks & Clans/F&C-1.jpg',
       '/images/Folks & Clans/F&C-2.jpg',
       '/images/Folks & Clans/F&C-3.jpg',
@@ -140,7 +147,6 @@ const commissionWorks = [
       '/images/Folks & Clans/F&C-10.jpg',
       '/images/Folks & Clans/F&C-11.jpg',
       '/images/Folks & Clans/F&C-12.jpg',
-      '/images/Folks & Clans/F&C-13.jpg',
       '/images/Folks & Clans/F&C-14.jpg',
       '/images/Folks & Clans/F&C-15.jpg',
       '/images/Folks & Clans/F&C-16.jpg',
@@ -165,6 +171,17 @@ export default function Commissions() {
   const slideRef = useRef(0)
   useEffect(() => { openWorkRef.current = openWork }, [openWork])
   useEffect(() => { slideRef.current = slide }, [slide])
+
+  // Decode every cover image up front. Without this, the first hover decodes
+  // the cover mid-fade, which janks; subsequent hovers are smooth because the
+  // image is cached. Pre-decoding makes the very first hover smooth too.
+  useEffect(() => {
+    commissionWorks.forEach((work) => {
+      const img = new window.Image()
+      img.src = work.images[0]
+      img.decode?.().catch(() => {})
+    })
+  }, [])
 
   const stageTarget = () => {
     const padding = 32
@@ -323,7 +340,7 @@ export default function Commissions() {
                 onMouseLeave={() => setHoveredIndex(null)}
                 onClick={() => open(wi)}
               >
-                <span className={`${styles.title} ${isHovered ? styles.inverting : ''}`}>{work.title}</span>
+                <span className={styles.title}>{work.title}</span>
               </li>
             )
           })}

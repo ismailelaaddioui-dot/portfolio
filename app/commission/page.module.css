@@ -28,11 +28,18 @@
      cropped, set per project via the --ratio custom property. */
   height: 546px;
   width: calc(546px * var(--ratio, 0.762));
-  z-index: 1;
   overflow: hidden;
   opacity: 0;
-  transition: opacity 0.12s ease;
+  /* ease-out: the image (and therefore the title's inversion, which is just
+     this image showing through the difference blend) appears quickly up front
+     then settles, so the title flips in lockstep with the cursor instead of
+     popping late. */
+  transition: opacity 0.4s ease-out;
   pointer-events: none;
+  /* Promote to its own layer up front so the first hover doesn't pay a
+     one-time compositing/raster cost (which janked the very first fade). */
+  will-change: opacity;
+  transform: translate(-50%, -50%) translateZ(0);
 }
 
 .previewVisible {
@@ -52,14 +59,13 @@
   padding: 0;
   text-align: center;
   position: relative;
-  z-index: 2;
 }
 
 .item {
   display: block;
   padding: 0.05rem 0;
   cursor: pointer;
-  transition: opacity 0.3s ease;
+  transition: opacity 0.4s ease-out;
   position: relative;
 }
 
@@ -74,17 +80,16 @@
   letter-spacing: -0.02em;
   line-height: 1.15;
   display: inline-block;
-  /* Black by default. The inversion over the hovered image is handled by
-     the .inverting modifier below, which swaps to white + difference so it
-     reads as the image's inverse where it overlaps. */
-  color: #000;
-}
-
-/* Applied to the hovered title only: white + difference renders black over
-   the white page and inverts wherever the preview image sits behind it. */
-.inverting {
+  /* Always white + difference. Inside the stage (isolated stacking context
+     with a white backdrop) this renders as black over the page, and inverts
+     to the image's complementary colors wherever a preview image sits behind
+     it. Because the image fades in/out over 0.4s, the inversion crossfades
+     smoothly with no class swap on hover. */
   color: #fff;
   mix-blend-mode: difference;
+  /* Match the preview image's 0.4s ease-out fade so the title's change stays
+     in lockstep with the image appearing/disappearing. */
+  transition: color 0.4s ease-out;
 }
 
 /* ── Lightbox ── */

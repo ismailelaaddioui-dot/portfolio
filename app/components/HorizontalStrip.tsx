@@ -41,6 +41,22 @@ export default function HorizontalStrip() {
 
     const cards = Array.from(track.querySelectorAll<HTMLElement>(`.${styles.card}`))
 
+    // Preload + decode every image once up front. Swapping an <img>'s src to a
+    // not-yet-decoded image leaves a blank/old frame for a frame or two, which
+    // reads as a flicker as a card recycles into view. Once every source is
+    // decoded in cache, assigning src is effectively instant and the flash is gone.
+    const decoded = new Set<string>()
+    IMAGES.forEach((src) => {
+      const pre = new Image()
+      pre.src = src
+      const markReady = () => decoded.add(src)
+      if (pre.decode) {
+        pre.decode().then(markReady).catch(markReady)
+      } else {
+        pre.onload = markReady
+      }
+    })
+
     // Scale range: smallest on the right, biggest on the left.
     const MIN_SCALE = 0.35
     const MAX_SCALE = 1
@@ -100,7 +116,13 @@ export default function HorizontalStrip() {
 
         const src = IMAGES[((imgIdx % IMAGES.length) + IMAGES.length) % IMAGES.length]
         const img = card.querySelector('img') as HTMLImageElement
-        if (img && img.getAttribute('data-src-idx') !== String(imgIdx)) {
+        // Only swap once the new source is fully decoded; otherwise keep showing
+        // the current frame so the card never flashes blank as it slides in.
+        if (
+          img &&
+          img.getAttribute('data-src-idx') !== String(imgIdx) &&
+          decoded.has(src)
+        ) {
           img.src = src
           img.setAttribute('data-src-idx', String(imgIdx))
         }

@@ -36,4 +36,8 @@
   object-fit: cover;
   object-position: center;
   display: block;
+  /* Promote to its own layer so swapping the decoded src doesn't trigger a
+     repaint flash as the card slides into view. */
+  backface-visibility: hidden;
+  transform: translateZ(0);
 }
