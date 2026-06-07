@@ -192,6 +192,26 @@ export default function PersonalWorks() {
   const prev = useCallback(() => slideStep(-1), [slideStep])
   const next = useCallback(() => slideStep(1), [slideStep])
 
+  // Touch swipe to change image on mobile. Record the start point; on release,
+  // a mostly-horizontal drag past the threshold advances one image.
+  const touchStart = useRef<{ x: number; y: number } | null>(null)
+  const onTouchStart = useCallback((e: React.TouchEvent) => {
+    const t = e.touches[0]
+    touchStart.current = { x: t.clientX, y: t.clientY }
+  }, [])
+  const onTouchEnd = useCallback((e: React.TouchEvent) => {
+    const start = touchStart.current
+    if (!start) return
+    touchStart.current = null
+    const t = e.changedTouches[0]
+    const dx = t.clientX - start.x
+    const dy = t.clientY - start.y
+    // Ignore taps and predominantly-vertical swipes.
+    if (Math.abs(dx) < 40 || Math.abs(dx) < Math.abs(dy)) return
+    if (dx < 0) next()
+    else prev()
+  }, [next, prev])
+
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
       if (e.key === 'Escape') close()
@@ -230,7 +250,13 @@ export default function PersonalWorks() {
           <button className={styles.lbPrev} onClick={e => { e.stopPropagation(); prev() }} aria-label="Previous">
             <Image src="/Assets/Left.svg" alt="" width={71} height={127} className={styles.lbArrowIcon} />
           </button>
-          <div ref={imgWrapRef} className={styles.lbImgWrap} onClick={e => e.stopPropagation()}>
+          <div
+            ref={imgWrapRef}
+            className={styles.lbImgWrap}
+            onClick={e => e.stopPropagation()}
+            onTouchStart={onTouchStart}
+            onTouchEnd={onTouchEnd}
+          >
             <div ref={trackRef} className={styles.lbTrack}>
               {/* Leading clone of the last image, then all real images, then a
                   trailing clone of the first — enables a seamless one-step loop. */}
