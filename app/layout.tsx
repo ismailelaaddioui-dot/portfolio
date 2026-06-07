@@ -5,10 +5,10 @@ import Navigation from './components/Navigation'
 export const metadata: Metadata = {
   metadataBase: new URL('https://www.ismailelaaddioui.com'),
   title: 'Ismail El Aaddioui — Photographer',
-  description: 'Photography portfolio of Ismail El Aaddioui',
+  description: 'Photographer & Filmmaker based in Marrakesh. Editorial, fashion, travel. GQ Middle East · M Le Monde · Nataal.',
   openGraph: {
     title: 'Ismail El Aaddioui — Photographer',
-    description: 'Photography portfolio of Ismail El Aaddioui',
+    description: 'Photographer & Filmmaker based in Marrakesh. Editorial, fashion, travel. GQ Middle East · M Le Monde · Nataal.',
     url: 'https://www.ismailelaaddioui.com',
     siteName: 'Ismail El Aaddioui',
     images: [
@@ -24,7 +24,7 @@ export const metadata: Metadata = {
   twitter: {
     card: 'summary_large_image',
     title: 'Ismail El Aaddioui — Photographer',
-    description: 'Photography portfolio of Ismail El Aaddioui',
+    description: 'Photographer & Filmmaker based in Marrakesh. Editorial, fashion, travel. GQ Middle East · M Le Monde · Nataal.',
     images: ['/images/Slider/IMG_7246-Edit 1.jpg'],
   },
 }
