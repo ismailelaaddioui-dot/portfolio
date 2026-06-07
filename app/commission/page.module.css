@@ -189,4 +189,12 @@
     height: 377px;
     width: calc(377px * var(--ratio, 0.762));
   }
+
+  /* Pin the carousel arrows to the bottom of the lightbox on mobile. */
+  .lbPrev,
+  .lbNext {
+    top: auto;
+    bottom: 1.5rem;
+    transform: none;
+  }
 }

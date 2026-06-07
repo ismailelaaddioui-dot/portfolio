@@ -113,7 +113,7 @@
 .lbNext:hover { opacity: 0.8; }
 
 .lbArrowIcon {
-  width: 16px;
+  width: 14px;
   height: auto;
 }
 
@@ -128,5 +128,13 @@
   /* No scattered gaps on mobile — single column of images, no empty cells. */
   .emptyCell {
     display: none;
+  }
+
+  /* Pin the carousel arrows to the bottom of the lightbox on mobile. */
+  .lbPrev,
+  .lbNext {
+    top: auto;
+    bottom: 1.5rem;
+    transform: none;
   }
 }
