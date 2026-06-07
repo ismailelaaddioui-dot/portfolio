@@ -3,7 +3,9 @@
   display: flex;
   flex-direction: column;
   align-items: center;
-  justify-content: center;
+  /* Fill the viewport height: first block pinned to the top, last to the
+     bottom, remaining space distributed evenly between the sections. */
+  justify-content: space-between;
   gap: 1.6rem;
   padding: 0 2rem 2rem;
 }

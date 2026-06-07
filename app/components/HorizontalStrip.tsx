@@ -61,9 +61,15 @@ export default function HorizontalStrip() {
     const MIN_SCALE = 0.35
     const MAX_SCALE = 1
 
+    // On narrow (touch) viewports we drop the perspective effect so every card
+    // is the same, normal size and the strip simply slides with a finger.
+    const MOBILE_BREAKPOINT = 768
+    let isMobile = false
+
     let baseSlotW = 0 // width of a full-size (scale 1) 4:5 card
 
     const computeLayout = () => {
+      isMobile = window.innerWidth <= MOBILE_BREAKPOINT
       // A full-size card is a 4:5 vertical rectangle filling the section height.
       const slotH = section.clientHeight
       baseSlotW = slotH * ASPECT
@@ -74,9 +80,24 @@ export default function HorizontalStrip() {
       targetXRef.current += e.deltaY * 0.5
     }
 
+    // Touch dragging: track the last X and move the strip by the delta, so the
+    // content follows the finger. Dragging left (finger moves left) advances
+    // forward, matching the wheel direction.
+    let lastTouchX = 0
+    const onTouchStart = (e: TouchEvent) => {
+      lastTouchX = e.touches[0].clientX
+    }
+    const onTouchMove = (e: TouchEvent) => {
+      e.preventDefault()
+      const x = e.touches[0].clientX
+      targetXRef.current += (lastTouchX - x) * 1.2
+      lastTouchX = x
+    }
+
     // Scale as a function of horizontal screen position (0 = left edge,
     // 1 = right edge): big on the left, small on the right.
     const scaleAt = (frac: number) => {
+      if (isMobile) return MAX_SCALE // uniform, normal-size cards on mobile
       let f = frac
       if (f < 0) f = 0
       else if (f > 1) f = 1
@@ -155,11 +176,15 @@ export default function HorizontalStrip() {
     window.addEventListener('resize', onResize)
 
     section.addEventListener('wheel', onWheel, { passive: false })
+    section.addEventListener('touchstart', onTouchStart, { passive: false })
+    section.addEventListener('touchmove', onTouchMove, { passive: false })
     rafRef.current = requestAnimationFrame(tick)
 
     return () => {
       cancelAnimationFrame(rafRef.current)
       section.removeEventListener('wheel', onWheel)
+      section.removeEventListener('touchstart', onTouchStart)
+      section.removeEventListener('touchmove', onTouchMove)
       window.removeEventListener('resize', onResize)
       document.body.classList.remove('no-scroll')
     }

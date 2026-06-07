@@ -8,15 +8,14 @@ import gsap from 'gsap'
 const commissionWorks = [
   {
     title: 'Khadija Ouarzaziya x Somnii',
-    // Cover is KW-5 (1500x2000) so the title's difference blend reads well
-    // over it.
-    ratio: 1500 / 2000,
+    // Cover is KW-1 (1661x2215).
+    ratio: 1661 / 2215,
     images: [
-      '/images/Khadija Ouarzaziya/KW-5.jpg',
       '/images/Khadija Ouarzaziya/KW-1.jpg',
       '/images/Khadija Ouarzaziya/KW-2.jpg',
       '/images/Khadija Ouarzaziya/KW-3.jpg',
       '/images/Khadija Ouarzaziya/KW-4.jpg',
+      '/images/Khadija Ouarzaziya/KW-5.jpg',
       '/images/Khadija Ouarzaziya/KW-6.jpg',
       '/images/Khadija Ouarzaziya/KW-7.jpg',
       '/images/Khadija Ouarzaziya/KW-8.jpg',
@@ -24,9 +23,6 @@ const commissionWorks = [
       '/images/Khadija Ouarzaziya/KW-10.jpg',
       '/images/Khadija Ouarzaziya/KW-11.jpg',
       '/images/Khadija Ouarzaziya/KW-12.jpg',
-      '/images/Khadija Ouarzaziya/KW-13.jpg',
-      '/images/Khadija Ouarzaziya/KW-14.jpg',
-      '/images/Khadija Ouarzaziya/KW-15.jpg',
     ],
   },
   {
@@ -84,6 +80,7 @@ const commissionWorks = [
       '/images/M le Monde/M le Monde-14.jpg',
       '/images/M le Monde/M le Monde-15.jpg',
       '/images/M le Monde/M le Monde-16.jpg',
+      '/images/M le Monde/M le Monde-17.jpg',
     ],
   },
   {
@@ -130,26 +127,18 @@ const commissionWorks = [
   },
   {
     title: 'Folks and Clans',
-    // Cover is F&C-13 (darkest, 1335x1670) for a brighter difference-blend
-    // title.
-    ratio: 1335 / 1670,
+    // Cover is F&C-6 (portrait, 1336x1670).
+    ratio: 1336 / 1670,
     images: [
-      '/images/Folks & Clans/F&C-13.jpg',
+      '/images/Folks & Clans/F&C-6.jpg',
       '/images/Folks & Clans/F&C-1.jpg',
       '/images/Folks & Clans/F&C-2.jpg',
       '/images/Folks & Clans/F&C-3.jpg',
       '/images/Folks & Clans/F&C-4.jpg',
       '/images/Folks & Clans/F&C-5.jpg',
-      '/images/Folks & Clans/F&C-6.jpg',
       '/images/Folks & Clans/F&C-7.jpg',
       '/images/Folks & Clans/F&C-8.jpg',
       '/images/Folks & Clans/F&C-9.jpg',
-      '/images/Folks & Clans/F&C-10.jpg',
-      '/images/Folks & Clans/F&C-11.jpg',
-      '/images/Folks & Clans/F&C-12.jpg',
-      '/images/Folks & Clans/F&C-14.jpg',
-      '/images/Folks & Clans/F&C-15.jpg',
-      '/images/Folks & Clans/F&C-16.jpg',
     ],
   },
 ]
@@ -238,7 +227,8 @@ export default function Commissions() {
       const track = trackRef.current
       if (!wrap || !overlay || !track) return
       gsap.set(overlay, { autoAlpha: 1 })
-      gsap.set(track, { xPercent: 0 })
+      // Opens at slide 0, which sits at track position 1 (after the leading clone).
+      gsap.set(track, { xPercent: -100 })
       const t = stageTarget()
       gsap.set(wrap, { left: rect.left, top: rect.top, width: rect.width, height: rect.height })
       gsap.to(wrap, { ...t, duration: 0.8, ease: 'power3.inOut' })
@@ -280,35 +270,42 @@ export default function Commissions() {
     })
   }, [])
 
-  const slideTo = useCallback((target: number) => {
+  // The track has a clone of the last image prepended and the first appended,
+  // so real slide `i` lives at track position `i + 1`. Sliding into a clone
+  // animates a single step, then we snap (no animation) to the matching real
+  // slide — so last → first (and first → last) loops seamlessly in one step
+  // instead of rewinding across every slide.
+  const slideStep = useCallback((dir: 1 | -1) => {
     const track = trackRef.current
     const workIdx = openWorkRef.current
     if (!track || workIdx === null || animating.current) return
+    const len = commissionWorks[workIdx].images.length
+    const cur = slideRef.current
     animating.current = true
-    slideRef.current = target
-    setSlide(target)
+
+    const fromPos = cur + 1
+    const toPos = fromPos + dir // may land on a clone (0 or len+1)
+    const realTarget = (cur + dir + len) % len
+
+    slideRef.current = realTarget
+    setSlide(realTarget)
+
     gsap.to(track, {
-      xPercent: -target * 100,
+      xPercent: -toPos * 100,
       duration: 0.6,
       ease: 'power3.inOut',
-      onComplete: () => { animating.current = false },
+      onComplete: () => {
+        if (toPos !== realTarget + 1) {
+          gsap.set(track, { xPercent: -(realTarget + 1) * 100 })
+        }
+        animating.current = false
+      },
     })
   }, [])
 
   // Loop within the current project's own images.
-  const prev = useCallback(() => {
-    const workIdx = openWorkRef.current
-    if (workIdx === null) return
-    const len = commissionWorks[workIdx].images.length
-    slideTo((slideRef.current - 1 + len) % len)
-  }, [slideTo])
-
-  const next = useCallback(() => {
-    const workIdx = openWorkRef.current
-    if (workIdx === null) return
-    const len = commissionWorks[workIdx].images.length
-    slideTo((slideRef.current + 1) % len)
-  }, [slideTo])
+  const prev = useCallback(() => slideStep(-1), [slideStep])
+  const next = useCallback(() => slideStep(1), [slideStep])
 
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
@@ -363,18 +360,30 @@ export default function Commissions() {
 
       {openWork !== null && (
         <div ref={overlayRef} className={styles.lightbox} onClick={close}>
-          <button className={styles.lbPrev} onClick={e => { e.stopPropagation(); prev() }}>‹</button>
+          <button className={styles.lbPrev} onClick={e => { e.stopPropagation(); prev() }} aria-label="Previous">
+            <Image src="/Assets/Left.svg" alt="" width={71} height={127} className={styles.lbArrowIcon} />
+          </button>
           <div ref={imgWrapRef} className={styles.lbImgWrap} onClick={e => e.stopPropagation()}>
             <div ref={trackRef} className={styles.lbTrack}>
-              {commissionWorks[openWork].images.map((src, i) => (
+              {/* Leading clone of the last image, then all real images, then a
+                  trailing clone of the first — enables a seamless one-step loop. */}
+              {[
+                commissionWorks[openWork].images[commissionWorks[openWork].images.length - 1],
+                ...commissionWorks[openWork].images,
+                commissionWorks[openWork].images[0],
+              ].map((src, i) => (
                 <div key={i} className={styles.lbSlide}>
-                  <Image src={src} alt="" fill className={styles.lbImg} sizes="90vw" priority={i === slide} />
+                  <Image src={src} alt="" fill className={styles.lbImg} sizes="90vw" priority={i === slide + 1} />
                 </div>
               ))}
             </div>
           </div>
-          <button className={styles.lbNext} onClick={e => { e.stopPropagation(); next() }}>›</button>
-          <button className={styles.lbClose} onClick={close}>✕</button>
+          <button className={styles.lbNext} onClick={e => { e.stopPropagation(); next() }} aria-label="Next">
+            <Image src="/Assets/right.svg" alt="" width={71} height={127} className={styles.lbArrowIcon} />
+          </button>
+          <button className={styles.lbClose} onClick={close} aria-label="Close">
+            <Image src="/Assets/close.svg" alt="" width={106} height={106} className={styles.lbCloseIcon} />
+          </button>
         </div>
       )}
     </div>

@@ -76,33 +76,46 @@
   position: fixed;
   top: 1.5rem;
   right: 1.5rem;
-  color: #000;
-  font-size: 1rem;
   opacity: 0.4;
   cursor: pointer;
   transition: opacity 0.2s;
   z-index: 1002;
+  background: none;
+  border: none;
+  padding: 0;
+  display: flex;
 }
 
 .lbClose:hover { opacity: 1; }
+
+.lbCloseIcon {
+  width: 16px;
+  height: 16px;
+}
 
 .lbPrev,
 .lbNext {
   position: fixed;
   top: 50%;
   transform: translateY(-50%);
-  color: #000;
-  font-size: 2.5rem;
   opacity: 0.25;
   cursor: pointer;
   padding: 0 1.5rem;
   transition: opacity 0.2s;
-  line-height: 1;
   z-index: 1002;
+  background: none;
+  border: none;
+  display: flex;
+  align-items: center;
 }
 
 .lbPrev:hover,
 .lbNext:hover { opacity: 0.8; }
+
+.lbArrowIcon {
+  width: 16px;
+  height: auto;
+}
 
 .lbPrev { left: 0; }
 .lbNext { right: 0; }

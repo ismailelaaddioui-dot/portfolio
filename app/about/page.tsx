@@ -43,10 +43,10 @@ export default function About() {
           Ismail El Aaddioui (b. 2001, Ouled Teima) is a photographer and graphic designer based in Marrakech, Morocco. Working outside conventional academic routes, he honed his craft through experience and hands-on exploration, seeking out recurring patterns and weaving them into visually compelling stories.
         </p>
         <p className={styles.bioText}>
-          His work captures the essence of human connections, the dynamics of family and lineage, and the subtle interplay between light, form, and environment. Whether photographing landscapes, architecture, or people, he uses minimalism as a foundation to craft images that balance intimacy with precision. Central to his practice is a deep engagement with his immediate surroundings — the shifting light across surfaces, the quiet geometry of structures, and the organic textures of natural forms.
+          His work captures the essence of human connections, the dynamics of family and lineage, and the subtle interplay between light, form, and environment. Whether photographing landscapes, architecture, or people, he uses minimalism as a foundation to craft images that balance intimacy with precision. Central to his practice is a deep engagement with his immediate surroundings: the shifting light across surfaces, the quiet geometry of structures, and the organic textures of natural forms.
         </p>
         <p className={styles.bioText}>
-          His practice spans editorial and commercial photography, analog and digital image-making, film developing, print production, and visual identity design — bringing a consistent compositional intelligence across every medium. He has collaborated with Boiler Room, Soursoup, M Le Monde Magazine, Nataal, and GQ Middle East, and has been exhibited at Fez Art Lab, Lblassa Art Space, and Izza House of Friends. In 2024, he published his debut photozine Inter with Izza House of Friends.
+          His practice spans editorial and commercial photography, analog and digital image-making, film developing, print production, and visual identity design, bringing a consistent compositional intelligence across every medium. He has collaborated with Boiler Room, Soursoup, M Le Monde Magazine, Nataal, and GQ Middle East, and has been exhibited at Fez Art Lab, Lblassa Art Space, and Izza House of Friends. In 2024, he published his debut photozine Inter with Izza House of Friends.
         </p>
       </div>
 
