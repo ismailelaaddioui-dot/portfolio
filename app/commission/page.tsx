@@ -307,6 +307,12 @@ export default function Commissions() {
   const prev = useCallback(() => slideStep(-1), [slideStep])
   const next = useCallback(() => slideStep(1), [slideStep])
 
+  // Lock page scroll while the lightbox is open (desktop + mobile).
+  useEffect(() => {
+    document.body.classList.toggle('no-scroll', openWork !== null)
+    return () => document.body.classList.remove('no-scroll')
+  }, [openWork])
+
   // Touch swipe to change image on mobile. Record the start point; on release,
   // a mostly-horizontal drag past the threshold advances one image.
   const touchStart = useRef<{ x: number; y: number } | null>(null)
