@@ -65,7 +65,6 @@ const commissionWorks = [
     ratio: 1920 / 1440,
     images: [
       '/images/M le Monde/M le Monde-1.jpg',
-      '/images/M le Monde/M le Monde-2.jpg',
       '/images/M le Monde/M le Monde-3.jpg',
       '/images/M le Monde/M le Monde-4.jpg',
       '/images/M le Monde/M le Monde-5.jpg',
@@ -113,7 +112,6 @@ const commissionWorks = [
       '/images/SIDI/DSCF3313 2.jpg',
       '/images/SIDI/Sidi-Beige Suit-50 2.jpg',
       '/images/SIDI/Sidi-Beige Suit-62 2.jpg',
-      '/images/SIDI/Sidi-Black Suit-8 2.jpg',
       '/images/SIDI/Sidi-Black Suit-32 2.jpg',
       '/images/SIDI/Sidi-Black Suit-36 2.jpg',
       '/images/SIDI/Sidi-Grey Suit-2 11.jpg',
