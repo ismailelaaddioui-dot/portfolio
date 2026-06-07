@@ -197,4 +197,11 @@
     bottom: 1.5rem;
     transform: none;
   }
+
+  /* 1rem gap between images during the slide transition on mobile. Each slide
+     keeps its full 100% width (so the xPercent step math stays exact) and the
+     image is inset 0.5rem on each side — adjacent images show a 1rem gutter. */
+  .lbSlide {
+    padding: 0 0.5rem;
+  }
 }
