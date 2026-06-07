@@ -80,4 +80,13 @@
   .navLink {
     font-size: 12px;
   }
+
+  /* Logo 10% smaller on mobile. */
+  .logoLatin {
+    height: 22.5px;
+  }
+
+  .logoArabic {
+    height: 38.7px;
+  }
 }

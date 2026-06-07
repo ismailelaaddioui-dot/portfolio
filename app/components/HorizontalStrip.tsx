@@ -84,14 +84,29 @@ export default function HorizontalStrip() {
     // content follows the finger. Dragging left (finger moves left) advances
     // forward, matching the wheel direction.
     let lastTouchX = 0
+    let touchStartX = 0
     const onTouchStart = (e: TouchEvent) => {
       lastTouchX = e.touches[0].clientX
+      touchStartX = e.touches[0].clientX
     }
     const onTouchMove = (e: TouchEvent) => {
       e.preventDefault()
       const x = e.touches[0].clientX
       targetXRef.current += (lastTouchX - x) * 1.2
       lastTouchX = x
+    }
+    // On mobile, snap to a full image per swipe: a swipe with enough travel
+    // advances exactly one card in its direction; a small drag settles back to
+    // the current card. The eased tick() then animates to the snapped target.
+    const onTouchEnd = (e: TouchEvent) => {
+      if (!isMobile) return
+      const totalDx = e.changedTouches[0].clientX - touchStartX
+      const SWIPE_THRESHOLD = 40 // px of travel to count as a directional swipe
+      const current = Math.round(targetXRef.current / baseSlotW)
+      let snapped = current
+      if (totalDx <= -SWIPE_THRESHOLD) snapped = Math.ceil(targetXRef.current / baseSlotW)
+      else if (totalDx >= SWIPE_THRESHOLD) snapped = Math.floor(targetXRef.current / baseSlotW)
+      targetXRef.current = snapped * baseSlotW
     }
 
     // Scale as a function of horizontal screen position (0 = left edge,
@@ -178,6 +193,7 @@ export default function HorizontalStrip() {
     section.addEventListener('wheel', onWheel, { passive: false })
     section.addEventListener('touchstart', onTouchStart, { passive: false })
     section.addEventListener('touchmove', onTouchMove, { passive: false })
+    section.addEventListener('touchend', onTouchEnd, { passive: false })
     rafRef.current = requestAnimationFrame(tick)
 
     return () => {
@@ -185,6 +201,7 @@ export default function HorizontalStrip() {
       section.removeEventListener('wheel', onWheel)
       section.removeEventListener('touchstart', onTouchStart)
       section.removeEventListener('touchmove', onTouchMove)
+      section.removeEventListener('touchend', onTouchEnd)
       window.removeEventListener('resize', onResize)
       document.body.classList.remove('no-scroll')
     }

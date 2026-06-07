@@ -228,6 +228,25 @@ export default function PersonalWorks() {
     return () => window.removeEventListener('keydown', onKey)
   }, [close, prev, next])
 
+  // Trackpad horizontal swipe (two-finger) to change image on desktop. Wheel
+  // events with horizontal delta drive one step per gesture; a cooldown gate
+  // keeps a single swipe from flipping through several images.
+  useEffect(() => {
+    if (lightbox === null) return
+    let cooling = false
+    const onWheel = (e: WheelEvent) => {
+      if (Math.abs(e.deltaX) <= Math.abs(e.deltaY)) return // vertical → ignore
+      e.preventDefault()
+      if (cooling || Math.abs(e.deltaX) < 8) return
+      cooling = true
+      setTimeout(() => { cooling = false }, 500)
+      if (e.deltaX > 0) next()
+      else prev()
+    }
+    window.addEventListener('wheel', onWheel, { passive: false })
+    return () => window.removeEventListener('wheel', onWheel)
+  }, [lightbox, next, prev])
+
   let photoIdx = -1
 
   return (
