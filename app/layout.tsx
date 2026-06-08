@@ -10,6 +10,9 @@ export const metadata: Metadata = {
     template: '%s — Ismail El Aaddioui',
   },
   description: 'Photographer & Filmmaker based in Marrakesh. Editorial, fashion, travel. GQ Middle East · M Le Monde · Nataal.',
+  alternates: {
+    canonical: '/',
+  },
   openGraph: {
     title: 'Ismail El Aaddioui — Photographer',
     description: 'Photographer & Filmmaker based in Marrakesh. Editorial, fashion, travel. GQ Middle East · M Le Monde · Nataal.',
