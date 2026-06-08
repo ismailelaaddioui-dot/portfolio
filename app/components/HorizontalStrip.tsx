@@ -9,15 +9,15 @@ const IMAGES = [
   '/images/Slider/IMG_7246-Edit 1.jpg',
   '/images/Slider/SXZ-337 3.jpg',
   '/images/Slider/Sidi-Black Suit-32 3.jpg',
-  '/images/Slider/Sidi-Grey Suit-24 3.jpg',
-  '/images/Slider/Travel-51 3.jpg',
-  '/images/Slider/fuji-2 1.jpg',
   '/images/Slider/image 142.jpg',
+  '/images/Slider/Sidi-Grey Suit-24 3.jpg',
   '/images/Slider/image 156.jpg',
+  '/images/Slider/Travel-51 3.jpg',
   '/images/Slider/image 159.jpg',
+  '/images/Slider/intersects 1.jpg',
+  '/images/Slider/fuji-2 1.jpg',
   '/images/Slider/image 86.jpg',
   '/images/Slider/img-7 3.jpg',
-  '/images/Slider/intersects 1.jpg',
 ]
 
 // A fixed pool of recyclable card slots. Smaller cards on the right mean more
