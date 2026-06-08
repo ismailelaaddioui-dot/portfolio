@@ -31,10 +31,6 @@
   transition: opacity 0.2s ease;
 }
 
-.emptyCell {
-  pointer-events: none;
-}
-
 /* ── Lightbox ── */
 
 .lightbox {
@@ -123,11 +119,6 @@
 @media (max-width: 768px) {
   .container {
     grid-template-columns: 1fr;
-  }
-
-  /* No scattered gaps on mobile — single column of images, no empty cells. */
-  .emptyCell {
-    display: none;
   }
 
   /* Pin the carousel arrows to the bottom of the lightbox on mobile. */

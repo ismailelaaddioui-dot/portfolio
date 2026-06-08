@@ -45,7 +45,7 @@ export default function Navigation() {
 
   const links = [
     { href: '/personal-works', label: 'Gallery' },
-    { href: '/commission', label: 'Commissions' },
+    { href: '/commissions', label: 'Commissions' },
     { href: '/about', label: 'About' },
   ]
 

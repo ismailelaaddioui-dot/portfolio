@@ -5,62 +5,46 @@ import Image from 'next/image'
 import gsap from 'gsap'
 import styles from './page.module.css'
 
+// Fixed shuffled order — randomized once and baked in, so the server-rendered
+// HTML matches every client load and the layout stays stable.
 const images = [
-  { src: '/images/Archive/3od-2 4.jpg', ratio: 4 / 3 },
-  { src: '/images/Archive/IMG_4221 2.jpg', ratio: 3 / 4 },
-  { src: '/images/Archive/Ismail-El-Aaddioui-1.jpg', ratio: 5 / 4 },
+  { src: '/images/Archive/image 150.jpg', ratio: 3 / 4 },
+  { src: '/images/Archive/Ismail-El-Aaddioui-9.jpg', ratio: 4 / 3 },
+  { src: '/images/Archive/Nekhla 3.jpg', ratio: 3 / 4 },
+  { src: '/images/Archive/image 96.jpg', ratio: 5 / 4 },
+  { src: '/images/Archive/Ismail-El-Aaddioui-16.jpg', ratio: 4 / 5 },
+  { src: '/images/Archive/image 159.jpg', ratio: 4 / 5 },
+  { src: '/images/Archive/image 120.jpg', ratio: 4 / 5 },
+  { src: '/images/Archive/inter23.jpg', ratio: 3 / 4 },
   { src: '/images/Archive/Ismail-El-Aaddioui-2.jpg', ratio: 4 / 5 },
+  { src: '/images/Archive/Ismail-El-Aaddioui-11.jpg', ratio: 4 / 5 },
+  { src: '/images/Archive/Ismail-El-Aaddioui-8.jpg', ratio: 4 / 5 },
+  { src: '/images/Archive/image 108.jpg', ratio: 5 / 4 },
   { src: '/images/Archive/Ismail-El-Aaddioui-3.jpg', ratio: 4 / 5 },
   { src: '/images/Archive/Ismail-El-Aaddioui-4.jpg', ratio: 5 / 4 },
-  { src: '/images/Archive/Ismail-El-Aaddioui-5.jpg', ratio: 5 / 4 },
-  { src: '/images/Archive/Ismail-El-Aaddioui-6.jpg', ratio: 4 / 5 },
-  { src: '/images/Archive/Ismail-El-Aaddioui-7.jpg', ratio: 5 / 4 },
-  { src: '/images/Archive/Ismail-El-Aaddioui-8.jpg', ratio: 4 / 5 },
-  { src: '/images/Archive/Ismail-El-Aaddioui-9.jpg', ratio: 4 / 3 },
-  { src: '/images/Archive/Ismail-El-Aaddioui-10.jpg', ratio: 4 / 3 },
-  { src: '/images/Archive/Ismail-El-Aaddioui-11.jpg', ratio: 4 / 5 },
-  { src: '/images/Archive/Ismail-El-Aaddioui-12.jpg', ratio: 5 / 4 },
-  { src: '/images/Archive/Ismail-El-Aaddioui-13.jpg', ratio: 4 / 3 },
-  { src: '/images/Archive/Ismail-El-Aaddioui-15.jpg', ratio: 3 / 2 },
-  { src: '/images/Archive/Ismail-El-Aaddioui-16.jpg', ratio: 4 / 5 },
-  { src: '/images/Archive/Nekhla 3.jpg', ratio: 3 / 4 },
-  { src: '/images/Archive/image 108.jpg', ratio: 5 / 4 },
-  { src: '/images/Archive/image 120.jpg', ratio: 4 / 5 },
-  { src: '/images/Archive/image 137.jpg', ratio: 4 / 5 },
-  { src: '/images/Archive/image 150.jpg', ratio: 3 / 4 },
-  { src: '/images/Archive/image 159.jpg', ratio: 4 / 5 },
-  { src: '/images/Archive/image 234.jpg', ratio: 5 / 4 },
-  { src: '/images/Archive/image 83.jpg', ratio: 5 / 4 },
-  { src: '/images/Archive/image 92.jpg', ratio: 1 / 1 },
-  { src: '/images/Archive/image 93.jpg', ratio: 5 / 4 },
-  { src: '/images/Archive/image 96.jpg', ratio: 5 / 4 },
-  { src: '/images/Archive/inter23.jpg', ratio: 3 / 4 },
   { src: '/images/Archive/inter24 1.jpg', ratio: 3 / 4 },
+  { src: '/images/Archive/Ismail-El-Aaddioui-7.jpg', ratio: 5 / 4 },
+  { src: '/images/Archive/IMG_4221 2.jpg', ratio: 3 / 4 },
+  { src: '/images/Archive/Ismail-El-Aaddioui-15.jpg', ratio: 3 / 2 },
+  { src: '/images/Archive/Ismail-El-Aaddioui-6.jpg', ratio: 4 / 5 },
+  { src: '/images/Archive/image 83.jpg', ratio: 5 / 4 },
+  { src: '/images/Archive/image 137.jpg', ratio: 4 / 5 },
+  { src: '/images/Archive/Ismail-El-Aaddioui-5.jpg', ratio: 5 / 4 },
+  { src: '/images/Archive/image 93.jpg', ratio: 5 / 4 },
+  { src: '/images/Archive/Ismail-El-Aaddioui-1.jpg', ratio: 5 / 4 },
   { src: '/images/Archive/intersects 4.jpg', ratio: 3 / 4 },
+  { src: '/images/Archive/image 234.jpg', ratio: 5 / 4 },
+  { src: '/images/Archive/Ismail-El-Aaddioui-12.jpg', ratio: 5 / 4 },
+  { src: '/images/Archive/image 92.jpg', ratio: 1 / 1 },
+  { src: '/images/Archive/3od-2 4.jpg', ratio: 4 / 3 },
+  { src: '/images/Archive/Ismail-El-Aaddioui-13.jpg', ratio: 4 / 3 },
+  { src: '/images/Archive/Ismail-El-Aaddioui-10.jpg', ratio: 4 / 3 },
 ]
-
-type Img = typeof images[number]
-
-// Interleave images with empty gap cells into the final grid layout.
-function buildGrid(imgs: Img[], emptySlots: Set<number>): (Img | null)[] {
-  const grid: (Img | null)[] = []
-  let imgIdx = 0, slot = 0
-  while (imgIdx < imgs.length) {
-    grid.push(emptySlots.has(slot) ? null : imgs[imgIdx++])
-    slot++
-  }
-  return grid
-}
-
-// Fixed layout (no randomness): the same gap positions every load, so the
-// server-rendered HTML and the client match and the order never changes.
-const EMPTY_SLOTS = new Set([2, 5, 9, 13, 17, 20, 23, 27, 30, 34, 37, 41])
 
 export default function PersonalWorks() {
   const [lightbox, setLightbox] = useState<number | null>(null)
-  // Fixed order and layout — identical on the server and every client load.
+  // Fixed order — identical on the server and every client load.
   const orderedImages = images
-  const grid = buildGrid(images, EMPTY_SLOTS)
   const overlayRef = useRef<HTMLDivElement>(null)
   const imgWrapRef = useRef<HTMLDivElement>(null)
   const trackRef = useRef<HTMLDivElement>(null)
@@ -247,28 +231,21 @@ export default function PersonalWorks() {
     return () => window.removeEventListener('wheel', onWheel)
   }, [lightbox, next, prev])
 
-  let photoIdx = -1
-
   return (
     <div ref={containerRef} className={`${styles.container} page-enter`}>
-      {grid.map((item, i) => {
-        if (!item) return <div key={i} className={styles.emptyCell} />
-        photoIdx++
-        const idx = photoIdx
-        return (
-          <div
-            key={i}
-            ref={el => { cellRefs.current[idx] = el }}
-            className={styles.cell}
-            style={{ paddingBottom: `${(1 / item.ratio) * 100}%` }}
-            onClick={e => open(idx, (e.currentTarget as HTMLElement).getBoundingClientRect())}
-          >
-            <div className={styles.imageInner}>
-              <Image src={item.src} alt="" fill className={styles.image} sizes="(max-width: 768px) 50vw, 17vw" />
-            </div>
+      {orderedImages.map((item, idx) => (
+        <div
+          key={idx}
+          ref={el => { cellRefs.current[idx] = el }}
+          className={styles.cell}
+          style={{ paddingBottom: `${(1 / item.ratio) * 100}%` }}
+          onClick={e => open(idx, (e.currentTarget as HTMLElement).getBoundingClientRect())}
+        >
+          <div className={styles.imageInner}>
+            <Image src={item.src} alt="" fill className={styles.image} sizes="(max-width: 768px) 50vw, 17vw" />
           </div>
-        )
-      })}
+        </div>
+      ))}
 
       {lightbox !== null && (
         <div ref={overlayRef} className={styles.lightbox} onClick={close}>
