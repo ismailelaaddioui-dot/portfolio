@@ -3,9 +3,7 @@
   display: flex;
   flex-direction: column;
   align-items: center;
-  /* Fill the viewport height: first block pinned to the top, last to the
-     bottom, remaining space distributed evenly between the sections. */
-  justify-content: space-between;
+  justify-content: center;
   gap: 1.6rem;
   padding: 0 2rem 2rem;
 }
@@ -20,7 +18,6 @@
   width: 160px;
   flex-shrink: 0;
   overflow: hidden;
-  margin-bottom: 0.4rem;
 }
 
 .portrait {

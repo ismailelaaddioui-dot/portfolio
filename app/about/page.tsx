@@ -38,15 +38,14 @@ export default function About() {
       </div>
 
       <div className={`${styles.section} ${styles.reveal}`}>
-        <p className={styles.label}>Artist Photographer, Based in Marrakech</p>
         <p className={styles.bioText}>
-          Ismail El Aaddioui (b. 2001, Ouled Teima) is a photographer and graphic designer based in Marrakech, Morocco. Working outside conventional academic routes, he honed his craft through experience and hands-on exploration, seeking out recurring patterns and weaving them into visually compelling stories.
+          Ismail El Aaddioui (b. 2001, Ouled Teima) is a photographer based in Marrakesh, Morocco.
         </p>
         <p className={styles.bioText}>
-          His work captures the essence of human connections, the dynamics of family and lineage, and the subtle interplay between light, form, and environment. Whether photographing landscapes, architecture, or people, he uses minimalism as a foundation to craft images that balance intimacy with precision. Central to his practice is a deep engagement with his immediate surroundings: the shifting light across surfaces, the quiet geometry of structures, and the organic textures of natural forms.
+          His work has appeared in GQ Middle East, M Le Monde, and Nataal, and he has collaborated with Boiler Room, Oasis Festival, and brands across Europe and North Africa. He has been exhibited at Fez Art Lab, Lblassa Art Space, IF Marrakech, and Izza House of Friends, where he published his photozine Inter in 2024. He is co-founder of Artists For Morocco.
         </p>
         <p className={styles.bioText}>
-          His practice spans editorial and commercial photography, analog and digital image-making, film developing, print production, and visual identity design, bringing a consistent compositional intelligence across every medium. He has collaborated with Boiler Room, Soursoup, M Le Monde Magazine, Nataal, and GQ Middle East, and has been exhibited at Fez Art Lab, Lblassa Art Space, and Izza House of Friends. In 2024, he published his debut photozine Inter with Izza House of Friends.
+          Self-taught and working outside conventional academic routes, he develops his practice through direct engagement with his surroundings and shifting light, quiet geometry, and human connections. Whether photographing landscapes, architecture, or people, his work lives in the interplay between light, form, and environment, finding meaning in the familiar and the overlooked.
         </p>
       </div>
 
@@ -54,7 +53,7 @@ export default function About() {
         <p className={styles.label}>Clients &amp; Collaborators</p>
         <p className={styles.bioText}>
           M Le Monde · GQ Middle East · Nataal · Boiler Room · Soursoup · Moroccan Guides Travel ·<br />
-          Artists For Morocco · Somnii Production · Touda Ecolodge · Izza House Of Friends · Oasis Festival ·<br />
+          Somnii Production · Touda Ecolodge · Izza House Of Friends · Oasis Festival ·<br />
           I came for couscous
         </p>
       </div>
