@@ -5,7 +5,10 @@ import Navigation from './components/Navigation'
 
 export const metadata: Metadata = {
   metadataBase: new URL('https://www.ismailelaaddioui.com'),
-  title: 'Ismail El Aaddioui — Photographer',
+  title: {
+    default: 'Ismail El Aaddioui — Photographer',
+    template: '%s — Ismail El Aaddioui',
+  },
   description: 'Photographer & Filmmaker based in Marrakesh. Editorial, fashion, travel. GQ Middle East · M Le Monde · Nataal.',
   openGraph: {
     title: 'Ismail El Aaddioui — Photographer',
