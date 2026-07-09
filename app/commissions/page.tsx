@@ -7,6 +7,17 @@ import gsap from 'gsap'
 
 const commissionWorks = [
   {
+    title: 'GQ Middle East',
+    // Cover is GQ_ME_Summer_25_Covers_4x5_Artsi (1600x2000).
+    ratio: 1600 / 2000,
+    images: [
+      '/images/GQ Middle East/GQ_ME_Summer_25_Covers_4x5_Artsi.webp',
+      '/images/GQ Middle East/morrocco watermarks 12.webp',
+      '/images/GQ Middle East/morrocco watermarks 15.webp',
+      '/images/GQ Middle East/morrocco watermarks 17.webp',
+    ],
+  },
+  {
     title: 'Khadija Ouarzaziya x Somnii',
     // Cover is KW-1 (1661x2215).
     ratio: 1661 / 2215,
