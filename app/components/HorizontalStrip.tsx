@@ -1,27 +1,27 @@
 'use client'
 
-import { useEffect, useRef } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import gsap from 'gsap'
 import styles from './HorizontalStrip.module.css'
 
 const ASPECT = 4 / 5 // card width:height ratio (vertical)
 
 const IMAGES = [
-  '/images/Slider/IMG_7246-Edit 1.jpg',
-  '/images/Slider/SXZ-337 3.jpg',
-  '/images/Slider/Sidi-Black Suit-32 3.jpg',
-  '/images/Slider/image 142.jpg',
-  '/images/Slider/Sidi-Grey Suit-24 3.jpg',
+  '/images/Slider/image 108.jpg',
   '/images/Slider/image 156.jpg',
+  '/images/Slider/IMG_7246-Edit 1.jpg',
+  '/images/Slider/Sidi-Grey Suit-24 3.jpg',
+  '/images/Slider/DSCF8716.jpg',
+  '/images/Slider/Bibou-78.jpg',
+  '/images/Slider/image 86.jpg',
+  '/images/Slider/image 142.jpg',
+  '/images/Slider/Sidi-Black Suit-32 3.jpg',
+  '/images/Slider/DSCF7748.jpg',
+  '/images/Slider/img-7 3.jpg',
+  '/images/Slider/SXZ-337 3.jpg',
   '/images/Slider/Travel-51 3.jpg',
   '/images/Slider/image 159.jpg',
   '/images/Slider/intersects 1.jpg',
-  '/images/Slider/image 86.jpg',
-  '/images/Slider/img-7 3.jpg',
-  '/images/Slider/Bibou-78.jpg',
-  '/images/Slider/DSCF7748.jpg',
-  '/images/Slider/DSCF8716.jpg',
-  '/images/Slider/image 108.jpg',
 ]
 
 // Per-image object-position overrides (default is centered — see .img).
@@ -31,11 +31,106 @@ const OBJECT_POSITIONS: Record<string, string> = {
   '/images/Slider/image 108.jpg': 'left',
 }
 
+const MOBILE_BREAKPOINT = 768
+
+export default function HorizontalStrip() {
+  // The desktop drag-strip and mobile carousel are different enough
+  // interaction models (perspective/wheel-driven vs. native touch swipe)
+  // that they're built as separate components rather than one engine
+  // branching internally. Mount only the one that matches, so the other's
+  // effects (rAF loop, listeners, body scroll lock) never run.
+  const [isMobile, setIsMobile] = useState<boolean | null>(null)
+
+  useEffect(() => {
+    const mq = window.matchMedia(`(max-width: ${MOBILE_BREAKPOINT}px)`)
+    setIsMobile(mq.matches)
+    const onChange = (e: MediaQueryListEvent) => setIsMobile(e.matches)
+    mq.addEventListener('change', onChange)
+    return () => mq.removeEventListener('change', onChange)
+  }, [])
+
+  // Avoid a mismatch flash: render nothing until we know which layout to use.
+  if (isMobile === null) return <div className={styles.section} />
+
+  return isMobile ? <MobileCarousel /> : <DesktopStrip />
+}
+
+// ── Mobile: native swipe carousel ──────────────────────────────────────────
+// Full-bleed, one image at a time, snapping via CSS scroll-snap so it feels
+// like a native photo viewer — no custom touch-physics to fight.
+function MobileCarousel() {
+  const scrollerRef = useRef<HTMLDivElement>(null)
+
+  useEffect(() => {
+    const scroller = scrollerRef.current
+    if (!scroller) return
+
+    const slides = Array.from(scroller.querySelectorAll<HTMLElement>(`.${styles.mobileSlide}`))
+
+    // Load-in: mask each slide bottom-to-top, staggered, same language as
+    // the desktop strip's reveal.
+    gsap.fromTo(slides.map((s) => s.querySelector('img')).filter(Boolean),
+      { clipPath: 'inset(100% 0 0 0)' },
+      {
+        clipPath: 'inset(0% 0 0 0)',
+        duration: 1.1,
+        ease: 'power3.out',
+        stagger: { amount: 0.4, from: 'start' },
+        onComplete: () => window.dispatchEvent(new CustomEvent('strip:ready')),
+      }
+    )
+  }, [])
+
+  // Tapping the far left/right edge of a slide advances to the
+  // previous/next image instead of just being a dead tap.
+  const onScrollerClick = (e: React.MouseEvent<HTMLDivElement>) => {
+    const scroller = scrollerRef.current
+    if (!scroller) return
+    const rect = scroller.getBoundingClientRect()
+    const clickX = e.clientX - rect.left
+    const edge = Math.min(120, rect.width * 0.2)
+    let dir: 1 | -1 | null = null
+    if (clickX < edge) dir = -1
+    else if (clickX > rect.width - edge) dir = 1
+    if (!dir) return
+
+    const current = Math.round(scroller.scrollLeft / scroller.clientWidth)
+    const slideCount = scroller.children.length
+    const target = Math.min(Math.max(current + dir, 0), slideCount - 1)
+    scroller.scrollTo({ left: target * scroller.clientWidth, behavior: 'smooth' })
+  }
+
+  return (
+    <div className={styles.mobileSection}>
+      <div
+        ref={scrollerRef}
+        className={styles.mobileScroller}
+        onClick={onScrollerClick}
+      >
+        {IMAGES.map((src, i) => (
+          <div key={src} className={styles.mobileSlide}>
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img
+              src={src}
+              alt=""
+              className={styles.mobileImg}
+              style={{ objectPosition: OBJECT_POSITIONS[src] ?? 'center' }}
+              draggable={false}
+              loading={i === 0 ? 'eager' : 'lazy'}
+            />
+          </div>
+        ))}
+      </div>
+    </div>
+  )
+}
+
 // A fixed pool of recyclable card slots. Smaller cards on the right mean more
 // of them fit across the screen, so we keep a generous pool to always cover it.
 const POOL_SIZE = 40
 
-export default function HorizontalStrip() {
+// ── Desktop: perspective drag-strip ─────────────────────────────────────────
+function DesktopStrip() {
   const sectionRef = useRef<HTMLDivElement>(null)
   const trackRef = useRef<HTMLDivElement>(null)
   const targetXRef = useRef(0)
@@ -70,15 +165,9 @@ export default function HorizontalStrip() {
     const MIN_SCALE = 0.35
     const MAX_SCALE = 1
 
-    // On narrow (touch) viewports we drop the perspective effect so every card
-    // is the same, normal size and the strip simply slides with a finger.
-    const MOBILE_BREAKPOINT = 768
-    let isMobile = false
-
     let baseSlotW = 0 // width of a full-size (scale 1) 4:5 card
 
     const computeLayout = () => {
-      isMobile = window.innerWidth <= MOBILE_BREAKPOINT
       // A full-size card is a 4:5 vertical rectangle filling the section height.
       const slotH = section.clientHeight
       baseSlotW = slotH * ASPECT
@@ -89,39 +178,9 @@ export default function HorizontalStrip() {
       targetXRef.current += e.deltaY * 0.5
     }
 
-    // Touch dragging: track the last X and move the strip by the delta, so the
-    // content follows the finger. Dragging left (finger moves left) advances
-    // forward, matching the wheel direction.
-    let lastTouchX = 0
-    let touchStartX = 0
-    const onTouchStart = (e: TouchEvent) => {
-      lastTouchX = e.touches[0].clientX
-      touchStartX = e.touches[0].clientX
-    }
-    const onTouchMove = (e: TouchEvent) => {
-      e.preventDefault()
-      const x = e.touches[0].clientX
-      targetXRef.current += (lastTouchX - x) * 1.2
-      lastTouchX = x
-    }
-    // On mobile, snap to a full image per swipe: a swipe with enough travel
-    // advances exactly one card in its direction; a small drag settles back to
-    // the current card. The eased tick() then animates to the snapped target.
-    const onTouchEnd = (e: TouchEvent) => {
-      if (!isMobile) return
-      const totalDx = e.changedTouches[0].clientX - touchStartX
-      const SWIPE_THRESHOLD = 40 // px of travel to count as a directional swipe
-      const current = Math.round(targetXRef.current / baseSlotW)
-      let snapped = current
-      if (totalDx <= -SWIPE_THRESHOLD) snapped = Math.ceil(targetXRef.current / baseSlotW)
-      else if (totalDx >= SWIPE_THRESHOLD) snapped = Math.floor(targetXRef.current / baseSlotW)
-      targetXRef.current = snapped * baseSlotW
-    }
-
     // Scale as a function of horizontal screen position (0 = left edge,
     // 1 = right edge): big on the left, small on the right.
     const scaleAt = (frac: number) => {
-      if (isMobile) return MAX_SCALE // uniform, normal-size cards on mobile
       let f = frac
       if (f < 0) f = 0
       else if (f > 1) f = 1
@@ -261,17 +320,11 @@ export default function HorizontalStrip() {
     })
 
     section.addEventListener('wheel', onWheel, { passive: false })
-    section.addEventListener('touchstart', onTouchStart, { passive: false })
-    section.addEventListener('touchmove', onTouchMove, { passive: false })
-    section.addEventListener('touchend', onTouchEnd, { passive: false })
     rafRef.current = requestAnimationFrame(tick)
 
     return () => {
       cancelAnimationFrame(rafRef.current)
       section.removeEventListener('wheel', onWheel)
-      section.removeEventListener('touchstart', onTouchStart)
-      section.removeEventListener('touchmove', onTouchMove)
-      section.removeEventListener('touchend', onTouchEnd)
       window.removeEventListener('resize', onResize)
       document.body.classList.remove('no-scroll')
     }

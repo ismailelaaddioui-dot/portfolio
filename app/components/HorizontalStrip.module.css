@@ -44,3 +44,44 @@
      unstyled/blank cards before the first animation frame runs. */
   clip-path: inset(100% 0 0 0);
 }
+
+/* ── Mobile carousel ── */
+
+.mobileSection {
+  width: 100%;
+  height: calc(100vh - var(--nav-height));
+  position: relative;
+}
+
+.mobileScroller {
+  height: 100%;
+  display: flex;
+  flex-direction: row;
+  overflow-x: auto;
+  overflow-y: hidden;
+  scroll-snap-type: x mandatory;
+  -webkit-overflow-scrolling: touch;
+  scrollbar-width: none;
+}
+
+.mobileScroller::-webkit-scrollbar {
+  display: none;
+}
+
+.mobileSlide {
+  flex: 0 0 100%;
+  width: 100%;
+  height: 100%;
+  scroll-snap-align: center;
+  scroll-snap-stop: always;
+  position: relative;
+  overflow: hidden;
+}
+
+.mobileImg {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+  clip-path: inset(100% 0 0 0);
+}
