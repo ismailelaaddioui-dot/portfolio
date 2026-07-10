@@ -37,6 +37,31 @@ export const metadata: Metadata = {
   },
 }
 
+const personJsonLd = {
+  '@context': 'https://schema.org',
+  '@type': 'Person',
+  name: 'Ismail El Aaddioui',
+  alternateName: 'إسماعيل العدوي',
+  url: 'https://www.ismailelaaddioui.com',
+  image: 'https://www.ismailelaaddioui.com/images/Ismail Elaaddioui portrait.jpg',
+  jobTitle: 'Photographer & Filmmaker',
+  birthDate: '2001',
+  birthPlace: 'Ouled Teima, Morocco',
+  address: {
+    '@type': 'PostalAddress',
+    addressLocality: 'Marrakesh',
+    addressCountry: 'MA',
+  },
+  email: 'mailto:Ismailelaaddioui@gmail.com',
+  sameAs: [
+    'https://instagram.com/Ismailelaaddioui',
+  ],
+  worksFor: {
+    '@type': 'Organization',
+    name: 'Artists For Morocco',
+  },
+}
+
 export default function RootLayout({
   children,
 }: {
@@ -56,6 +81,9 @@ export default function RootLayout({
             gtag('js', new Date());
             gtag('config', 'G-M5KN7DFWCN');
           `}
+        </Script>
+        <Script id="person-jsonld" type="application/ld+json" strategy="beforeInteractive">
+          {JSON.stringify(personJsonLd)}
         </Script>
       </head>
       <body>

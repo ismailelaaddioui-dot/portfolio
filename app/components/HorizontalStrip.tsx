@@ -216,11 +216,26 @@ export default function HorizontalStrip() {
 
     Promise.all(decodePromises).then(() => {
       layoutFrame()
-      const visibleImgs = cards
-        .filter((card) => card.style.display !== 'none')
+      // Reveal every pooled card, not just the ones on-screen at this exact
+      // instant — the strip keeps drifting for a while after this (see
+      // EXTRA_DRIFT above), so cards still off-screen now will slide into
+      // view shortly after. Each is a persistent DOM node reused across
+      // recycles, so it only ever needs unmasking once; excluding the
+      // not-yet-visible ones left them permanently clipped once they later
+      // scrolled in — the "smallest image on the right loads after" bug.
+      const allImgs = cards
         .map((card) => card.querySelector('img'))
         .filter((img): img is HTMLImageElement => !!img)
-      gsap.fromTo(visibleImgs,
+      // Order the stagger left-to-right by each card's current on-screen
+      // position, so the reveal still reads as sweeping across the row.
+      const orderedImgs = allImgs.slice().sort((a, b) => {
+        const ax = a.closest(`.${styles.card}`) as HTMLElement | null
+        const bx = b.closest(`.${styles.card}`) as HTMLElement | null
+        const aLeft = ax ? parseFloat(ax.style.transform.replace(/[^0-9.-]/g, '')) || 0 : 0
+        const bLeft = bx ? parseFloat(bx.style.transform.replace(/[^0-9.-]/g, '')) || 0 : 0
+        return aLeft - bLeft
+      })
+      gsap.fromTo(orderedImgs,
         { clipPath: 'inset(100% 0 0 0)' },
         {
           clipPath: 'inset(0% 0 0 0)',
