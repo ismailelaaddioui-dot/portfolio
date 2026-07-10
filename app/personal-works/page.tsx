@@ -48,6 +48,8 @@ const images = [
   { src: '/images/Archive/image 137.jpg', ratio: 4 / 5 },
   { src: '/images/Archive/intersects 4.jpg', ratio: 3 / 4 },
   { src: '/images/Archive/image 159.jpg', ratio: 4 / 5 },
+  { src: '/images/Archive/Bibou-78.jpg', ratio: 4 / 5 },
+  { src: '/images/Archive/DSCF8710.jpg', ratio: 4 / 5 },
 ]
 
 export default function PersonalWorks() {

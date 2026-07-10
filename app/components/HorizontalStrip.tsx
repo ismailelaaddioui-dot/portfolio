@@ -16,9 +16,12 @@ const IMAGES = [
   '/images/Slider/Travel-51 3.jpg',
   '/images/Slider/image 159.jpg',
   '/images/Slider/intersects 1.jpg',
-  '/images/Slider/fuji-2 1.jpg',
   '/images/Slider/image 86.jpg',
   '/images/Slider/img-7 3.jpg',
+  '/images/Slider/Bibou-78.jpg',
+  '/images/Slider/DSCF7748.jpg',
+  '/images/Slider/DSCF8716.jpg',
+  '/images/Slider/image 108.jpg',
 ]
 
 // A fixed pool of recyclable card slots. Smaller cards on the right mean more
