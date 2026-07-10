@@ -40,4 +40,7 @@
      repaint flash as the card slides into view. */
   backface-visibility: hidden;
   transform: translateZ(0);
+  /* Masked until the load-in reveal (JS) unclips it — avoids a flash of
+     unstyled/blank cards before the first animation frame runs. */
+  clip-path: inset(100% 0 0 0);
 }

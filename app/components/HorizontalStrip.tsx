@@ -1,6 +1,7 @@
 'use client'
 
 import { useEffect, useRef } from 'react'
+import gsap from 'gsap'
 import styles from './HorizontalStrip.module.css'
 
 const ASPECT = 4 / 5 // card width:height ratio (vertical)
@@ -46,15 +47,13 @@ export default function HorizontalStrip() {
     // reads as a flicker as a card recycles into view. Once every source is
     // decoded in cache, assigning src is effectively instant and the flash is gone.
     const decoded = new Set<string>()
-    IMAGES.forEach((src) => {
+    const decodePromises = IMAGES.map((src) => {
       const pre = new Image()
       pre.src = src
       const markReady = () => decoded.add(src)
-      if (pre.decode) {
-        pre.decode().then(markReady).catch(markReady)
-      } else {
-        pre.onload = markReady
-      }
+      return pre.decode
+        ? pre.decode().then(markReady).catch(markReady)
+        : new Promise<void>((resolve) => { pre.onload = () => { markReady(); resolve() } })
     })
 
     // Scale range: smallest on the right, biggest on the left.
@@ -189,6 +188,51 @@ export default function HorizontalStrip() {
     computeLayout()
     const onResize = () => computeLayout()
     window.addEventListener('resize', onResize)
+
+    // Load-in: the strip starts scrolled behind its resting position (content
+    // shifted right) and eases forward to it — read as sliding right-to-left
+    // into place — while each visible card's image unmasks bottom-to-top on
+    // top of that motion. Both read as one continuous settle rather than two
+    // separate animations. Every card image starts CSS-clipped (see .img), so
+    // nothing flashes unstyled before this runs — we just wait for the
+    // initially-visible images to finish decoding, assign them, then reveal.
+    //
+    // The horizontal settle itself is driven by a GSAP tween on targetXRef
+    // (tick()'s lerp then trails it), timed to keep drifting for about 1s
+    // after the mask reveal finishes, instead of snapping to rest early.
+    const introStart = { x: -baseSlotW * 2.5 }
+    renderedXRef.current = introStart.x
+    targetXRef.current = introStart.x
+
+    const REVEAL_DURATION = 1.1 // seconds, matches the mask reveal below
+    const EXTRA_DRIFT = 1 // seconds of continued sliding after everything else settles
+
+    gsap.to(introStart, {
+      x: 0,
+      duration: REVEAL_DURATION + EXTRA_DRIFT,
+      ease: 'power2.out',
+      onUpdate: () => { targetXRef.current = introStart.x },
+    })
+
+    Promise.all(decodePromises).then(() => {
+      layoutFrame()
+      const visibleImgs = cards
+        .filter((card) => card.style.display !== 'none')
+        .map((card) => card.querySelector('img'))
+        .filter((img): img is HTMLImageElement => !!img)
+      gsap.fromTo(visibleImgs,
+        { clipPath: 'inset(100% 0 0 0)' },
+        {
+          clipPath: 'inset(0% 0 0 0)',
+          duration: REVEAL_DURATION,
+          ease: 'power3.out',
+          stagger: { amount: 0.4, from: 'start' },
+        }
+      )
+      // Let the nav (mounted separately in layout) know the strip is revealing,
+      // so both entrances play in lockstep instead of the nav firing early.
+      window.dispatchEvent(new CustomEvent('strip:ready'))
+    })
 
     section.addEventListener('wheel', onWheel, { passive: false })
     section.addEventListener('touchstart', onTouchStart, { passive: false })

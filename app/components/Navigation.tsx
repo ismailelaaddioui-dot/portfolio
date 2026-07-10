@@ -11,20 +11,33 @@ export default function Navigation() {
   const navRef = useRef<HTMLElement>(null)
 
   // Staggered entrance for the nav (logos + links), matching the page reveals.
+  // On the homepage, the hero strip has its own load-in that waits on image
+  // decode before it starts — wait for its "ready" signal so the nav reveals
+  // in lockstep with it instead of firing early.
   useEffect(() => {
     const items = navRef.current?.querySelectorAll(`.${styles.reveal}`)
     if (!items) return
-    gsap.fromTo(items,
-      { opacity: 0, y: 16 },
-      {
-        opacity: 1,
-        y: 0,
-        duration: 0.9,
-        ease: 'expo.out',
-        stagger: { amount: 0.5, from: 'start' },
-      }
-    )
-  }, [])
+
+    const playReveal = () => {
+      gsap.fromTo(items,
+        { opacity: 0, y: 16 },
+        {
+          opacity: 1,
+          y: 0,
+          duration: 0.9,
+          ease: 'expo.out',
+          stagger: { amount: 0.5, from: 'start' },
+        }
+      )
+    }
+
+    if (pathname === '/') {
+      window.addEventListener('strip:ready', playReveal, { once: true })
+      return () => window.removeEventListener('strip:ready', playReveal)
+    }
+
+    playReveal()
+  }, [pathname])
 
   // Publish the nav's real rendered height so the homepage slider can size
   // itself to fill exactly the remaining viewport (calc(100vh - nav-height)).
