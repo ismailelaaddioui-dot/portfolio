@@ -24,6 +24,13 @@ const IMAGES = [
   '/images/Slider/image 108.jpg',
 ]
 
+// Per-image object-position overrides (default is centered — see .img).
+// image 108.jpg is a wide landscape shot cropped into a vertical card, and
+// crops better anchored to the left of the frame than the center.
+const OBJECT_POSITIONS: Record<string, string> = {
+  '/images/Slider/image 108.jpg': 'left',
+}
+
 // A fixed pool of recyclable card slots. Smaller cards on the right mean more
 // of them fit across the screen, so we keep a generous pool to always cover it.
 const POOL_SIZE = 40
@@ -162,6 +169,7 @@ export default function HorizontalStrip() {
           decoded.has(src)
         ) {
           img.src = src
+          img.style.objectPosition = OBJECT_POSITIONS[src] ?? 'center'
           img.setAttribute('data-src-idx', String(imgIdx))
         }
 
