@@ -1,11 +1,13 @@
 .container {
-  min-height: calc(100vh - var(--nav-height));
+  height: calc(100vh - var(--nav-height));
+  box-sizing: border-box;
   display: flex;
-  flex-direction: column;
+  flex-direction: row;
   align-items: center;
-  justify-content: center;
-  gap: 1.6rem;
-  padding: 0 2rem 2rem;
+  justify-content: space-between;
+  gap: 4rem;
+  padding: 2rem 3rem;
+  overflow: hidden;
 }
 
 .reveal {
@@ -14,8 +16,9 @@
 
 .portraitWrapper {
   position: relative;
-  aspect-ratio: 1 / 1;
-  width: 160px;
+  aspect-ratio: 4 / 5;
+  height: 100%;
+  max-width: 45%;
   flex-shrink: 0;
   overflow: hidden;
 }
@@ -25,53 +28,95 @@
   object-position: center 30%;
 }
 
+.content {
+  display: flex;
+  flex-direction: column;
+  gap: 1.75rem;
+  flex: 1 1 auto;
+  max-width: 720px;
+  max-height: 100%;
+  overflow: hidden;
+}
+
 .bioText {
   font-size: 12px;
-  line-height: 14px;
-  color: rgba(10, 10, 10, 0.75);
+  line-height: 16px;
+  color: #000000;
   margin: 0;
-  max-width: 780px;
-  text-align: center;
+  text-align: left;
+}
+
+.bioText strong {
+  font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif;
+  color: #000000;
+  font-weight: 700;
+}
+
+.inlineLink {
+  color: #000000;
+  text-decoration: none;
+  transition: opacity 0.2s ease;
+}
+
+.inlineLink:hover {
+  opacity: 0.6;
 }
 
 /* Space between stacked bio paragraphs, while the section's own gap keeps the
    title → first-paragraph distance identical to the other sections. */
 .bioText + .bioText {
-  margin-top: 0.9rem;
+  margin-top: 0.5rem;
 }
 
 .section {
   display: flex;
   flex-direction: column;
-  align-items: center;
-  gap: 0.1rem;
-}
-
-.contactRow {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 1.6rem;
+  align-items: flex-start;
+  gap: 0.5rem;
 }
 
 .label {
-  font-family: 'HelveticaNow', 'Helvetica Neue', Helvetica, Arial, sans-serif;
+  font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif;
   font-size: 12px;
-  font-weight: 500;
-  font-style: italic;
+  font-weight: 700;
   letter-spacing: 0;
   color: #000000;
   margin: 0;
-  text-align: center;
+  text-align: left;
 }
 
 .contactLink {
   font-size: 12px;
-  color: rgba(10, 10, 10, 0.75);
+  line-height: 16px;
+  color: #000000;
   text-decoration: none;
-  text-align: center;
+  text-align: left;
 }
 
 .contactLink:hover {
   color: rgba(10, 10, 10, 1);
+}
+
+@media (max-width: 900px) {
+  .container {
+    height: auto;
+    min-height: calc(100vh - var(--nav-height));
+    flex-direction: column;
+    align-items: stretch;
+    padding: 1.5rem 1.5rem 3rem;
+    gap: 1.25rem;
+    overflow: visible;
+  }
+
+  .portraitWrapper {
+    width: 100%;
+    height: auto;
+    max-width: 100%;
+  }
+
+  .content {
+    max-width: 100%;
+    max-height: none;
+    overflow: visible;
+  }
 }

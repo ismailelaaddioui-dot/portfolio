@@ -1,17 +1,19 @@
 .nav {
-  padding: 2rem 3rem 32px;
+  position: relative;
+  padding: 2rem 3rem;
   display: flex;
-  flex-direction: column;
+  flex-direction: row;
   align-items: center;
+  justify-content: space-between;
   gap: 1.25rem;
 }
 
 .logo {
   display: flex;
-  flex-direction: column;
-  align-items: center;
+  flex-direction: row;
+  align-items: baseline;
   justify-content: center;
-  gap: 1rem;
+  gap: 1.25rem;
   transition: opacity 0.3s ease;
   text-decoration: none;
 }
@@ -21,22 +23,37 @@
 }
 
 .logoLatin {
-  width: auto;
-  height: 25px;
-  object-fit: contain;
+  margin: 0;
+  font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif;
+  font-weight: 500;
+  font-size: 24px;
+  line-height: 1;
+  color: #000000;
+  white-space: nowrap;
 }
 
 .logoArabic {
-  width: auto;
-  height: 43px;
-  object-fit: contain;
+  font-family: 'SakkalKitab', 'Helvetica Neue', Helvetica, Arial, sans-serif;
+  font-weight: 500;
+  font-size: 27px;
+  line-height: 1;
+  color: #000000;
+  white-space: nowrap;
 }
 
 .reveal {
   opacity: 0;
 }
 
-.navList {
+.navRow {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  justify-content: center;
+}
+
+.navList,
+.socialList {
   display: flex;
   flex-direction: row;
   gap: 2.5rem;
@@ -44,6 +61,12 @@
   margin: 0;
   padding: 0;
   align-items: center;
+}
+
+.socialList {
+  align-items: center;
+  flex-shrink: 0;
+  gap: 1rem;
 }
 
 .navLink {
@@ -69,24 +92,40 @@
 
 @media (max-width: 768px) {
   .nav {
+    flex-direction: column;
     padding: 1.5rem 1.5rem 1.25rem;
     gap: 1rem;
   }
 
-  .navList {
+  .navRow {
+    flex-direction: column;
+    gap: 0.85rem;
+  }
+
+  .navList,
+  .socialList {
     gap: 1.5rem;
+  }
+
+  .navList {
+    flex-wrap: wrap;
+    justify-content: center;
   }
 
   .navLink {
     font-size: 12px;
   }
 
-  /* Logo 10% smaller on mobile. */
+  /* Logo smaller on mobile. */
+  .logo {
+    gap: 0.75rem;
+  }
+
   .logoLatin {
-    height: 22.5px;
+    font-size: 19px;
   }
 
   .logoArabic {
-    height: 38.7px;
+    font-size: 20px;
   }
 }

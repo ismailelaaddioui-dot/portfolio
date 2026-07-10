@@ -2,11 +2,12 @@ import type { Metadata } from 'next'
 import Script from 'next/script'
 import './globals.css'
 import Navigation from './components/Navigation'
+import ImageProtection from './components/ImageProtection'
 
 export const metadata: Metadata = {
   metadataBase: new URL('https://www.ismailelaaddioui.com'),
   title: {
-    default: 'Ismail El Aaddioui — Photographer',
+    default: 'Ismail El Aaddioui — Photographer & Filmmaker, Marrakesh',
     template: '%s — Ismail El Aaddioui',
   },
   description: 'Photographer & Filmmaker based in Marrakesh. Editorial, fashion, travel. GQ Middle East · M Le Monde · Nataal.',
@@ -14,7 +15,7 @@ export const metadata: Metadata = {
     canonical: '/',
   },
   openGraph: {
-    title: 'Ismail El Aaddioui — Photographer',
+    title: 'Ismail El Aaddioui — Photographer & Filmmaker, Marrakesh',
     description: 'Photographer & Filmmaker based in Marrakesh. Editorial, fashion, travel. GQ Middle East · M Le Monde · Nataal.',
     url: 'https://www.ismailelaaddioui.com',
     siteName: 'Ismail El Aaddioui',
@@ -30,7 +31,7 @@ export const metadata: Metadata = {
   },
   twitter: {
     card: 'summary_large_image',
-    title: 'Ismail El Aaddioui — Photographer',
+    title: 'Ismail El Aaddioui — Photographer & Filmmaker, Marrakesh',
     description: 'Photographer & Filmmaker based in Marrakesh. Editorial, fashion, travel. GQ Middle East · M Le Monde · Nataal.',
     images: ['/images/Slider/IMG_7246-Edit 1.jpg'],
   },
@@ -58,6 +59,7 @@ export default function RootLayout({
         </Script>
       </head>
       <body>
+        <ImageProtection />
         <Navigation />
         <main>{children}</main>
       </body>

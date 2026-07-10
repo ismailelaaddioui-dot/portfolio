@@ -1,0 +1,16 @@
+.container {
+  min-height: calc(100vh - var(--nav-height));
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.reveal {
+  opacity: 0;
+}
+
+.comingSoon {
+  font-size: 13px;
+  color: rgba(10, 10, 10, 0.5);
+  font-style: italic;
+}

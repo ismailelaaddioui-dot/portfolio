@@ -3,7 +3,6 @@
 import { useEffect, useRef } from 'react'
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
-import Image from 'next/image'
 import gsap from 'gsap'
 import styles from './Navigation.module.css'
 
@@ -47,40 +46,50 @@ export default function Navigation() {
     { href: '/personal-works', label: 'Gallery' },
     { href: '/commissions', label: 'Commissions' },
     { href: '/about', label: 'About' },
+    { href: '/prints', label: 'Prints' },
+    { href: '/publications', label: 'Publications' },
   ]
 
   return (
     <nav ref={navRef} className={styles.nav}>
       <Link href="/" data-nav-item className={`${styles.logo} ${styles.reveal}`}>
-        <Image
-          src="/Assets/logo lt.svg"
-          alt="Ismail El Aaddioui"
-          width={176}
-          height={66}
-          className={styles.logoLatin}
-          priority
-        />
-        <Image
-          src="/Assets/logo ar.svg"
-          alt="إسماعيل العديوي"
-          width={176}
-          height={66}
-          className={styles.logoArabic}
-          priority
-        />
+        <h1 className={styles.logoLatin}>Ismail El Aaddioui</h1>
+        <span className={styles.logoArabic} lang="ar">
+          إسماعيل العدوي
+        </span>
       </Link>
 
-      <ul className={styles.navList}>
-        {links.map((link) => (
-          <li key={link.href} data-nav-item className={styles.reveal}>
-            <Link
-              href={link.href}
-              className={`${styles.navLink} nav-link ${pathname === link.href ? styles.active : ''}`}
-            >
-              {link.label}
-            </Link>
-          </li>
-        ))}
+      <div className={styles.navRow}>
+        <ul className={styles.navList}>
+          {links.map((link) => (
+            <li key={link.href} data-nav-item className={styles.reveal}>
+              <Link
+                href={link.href}
+                className={`${styles.navLink} nav-link ${pathname === link.href ? styles.active : ''}`}
+              >
+                {link.label}
+              </Link>
+            </li>
+          ))}
+        </ul>
+      </div>
+
+      <ul className={styles.socialList}>
+        <li data-nav-item className={styles.reveal}>
+          <a
+            href="https://instagram.com/Ismailelaaddioui"
+            target="_blank"
+            rel="noopener noreferrer"
+            className={`${styles.navLink} nav-link`}
+          >
+            [ Instagram ]
+          </a>
+        </li>
+        <li data-nav-item className={styles.reveal}>
+          <a href="mailto:Ismailelaaddioui@gmail.com" className={`${styles.navLink} nav-link`}>
+            [ Email ]
+          </a>
+        </li>
       </ul>
     </nav>
   )
