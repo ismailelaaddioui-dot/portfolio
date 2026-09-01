@@ -15,14 +15,21 @@ Options:
     -j, --jobs N         Parallel downloads (default: 4)
     --no-originals       Skip the i.pinimg.com "originals" upgrade attempt
     --cookies FILE       Netscape cookies.txt, for secret/private boards
+    --cookie-header STR  Raw Cookie header copied from your browser (easier)
     --manifest           Also write manifest.json (title, description, source link)
+    --debug              Print HTTP details when something fails
 
-Notes:
-    * Pinterest serves boards through an internal JSON endpoint. It is public
-      but undocumented, so it can change without warning; if pin extraction
-      starts returning zero results, that is the usual cause.
-    * Secret boards need your session: export cookies for pinterest.com from
-      your browser into a cookies.txt and pass --cookies.
+How it gets the pins:
+    1. Loads the board page once to pick up Pinterest's session + CSRF cookies,
+       and scrapes the pins embedded in that page's JSON (first screen).
+    2. Uses the internal BoardFeedResource endpoint, with those cookies, to
+       page through the rest of the board.
+
+    Step 2 is undocumented and Pinterest sometimes answers it with 403. When
+    that happens the script still saves everything it found in step 1 and says
+    so. To get the full board in that case, export your browser cookies for
+    pinterest.com to a cookies.txt and pass --cookies - a logged-in session is
+    almost always accepted.
 """
 
 from __future__ import annotations
@@ -37,7 +44,7 @@ import time
 import urllib.error
 import urllib.parse
 import urllib.request
-from http.cookiejar import MozillaCookieJar
+from http.cookiejar import CookieJar, MozillaCookieJar
 
 BASE = "https://www.pinterest.com"
 UA = (
@@ -48,18 +55,35 @@ PAGE_SIZE = 25
 SLEEP_BETWEEN_PAGES = 0.6
 
 _opener: urllib.request.OpenerDirector | None = None
+_jar: CookieJar | None = None
+_csrf: str | None = None
+_cookie_header: str | None = None
+DEBUG = False
 
 
 # --------------------------------------------------------------------------- #
 # HTTP
 # --------------------------------------------------------------------------- #
 def build_opener(cookies_file: str | None) -> urllib.request.OpenerDirector:
-    handlers = []
+    global _jar
     if cookies_file:
-        jar = MozillaCookieJar()
-        jar.load(os.path.expanduser(cookies_file), ignore_discard=True, ignore_expires=True)
-        handlers.append(urllib.request.HTTPCookieProcessor(jar))
-    return urllib.request.build_opener(*handlers)
+        _jar = MozillaCookieJar()
+        _jar.load(os.path.expanduser(cookies_file), ignore_discard=True, ignore_expires=True)
+    else:
+        _jar = CookieJar()
+    return urllib.request.build_opener(urllib.request.HTTPCookieProcessor(_jar))
+
+
+def cookie_value(name: str) -> str | None:
+    if _cookie_header:
+        for part in _cookie_header.split(";"):
+            key, _, val = part.strip().partition("=")
+            if key == name and val:
+                return val
+    for cookie in _jar or []:
+        if cookie.name == name:
+            return cookie.value
+    return None
 
 
 def fetch(url: str, headers: dict[str, str] | None = None, retries: int = 3) -> bytes:
@@ -67,6 +91,8 @@ def fetch(url: str, headers: dict[str, str] | None = None, retries: int = 3) -> 
         "User-Agent": UA,
         "Accept-Language": "en-US,en;q=0.9",
     }
+    if _cookie_header:
+        hdrs["Cookie"] = _cookie_header
     hdrs.update(headers or {})
     last: Exception | None = None
     for attempt in range(retries):
@@ -76,6 +102,8 @@ def fetch(url: str, headers: dict[str, str] | None = None, retries: int = 3) -> 
                 return resp.read()
         except urllib.error.HTTPError as exc:
             last = exc
+            if DEBUG:
+                print(f"    [debug] HTTP {exc.code} for {url[:120]}", file=sys.stderr)
             if exc.code in (403, 404, 410):
                 raise
             time.sleep(2 ** attempt)
@@ -96,6 +124,8 @@ def api_get(resource: str, options: dict, source_url: str) -> dict:
             "X-Requested-With": "XMLHttpRequest",
             "X-APP-VERSION": "a89ec0e",
             "X-Pinterest-AppState": "active",
+            "X-Pinterest-PWS-Handler": "www/[username]/[slug].js",
+            "X-CSRFToken": _csrf or "",
             "Referer": BASE + source_url,
         },
     )
@@ -105,6 +135,78 @@ def api_get(resource: str, options: dict, source_url: str) -> dict:
 # --------------------------------------------------------------------------- #
 # Board / pin parsing
 # --------------------------------------------------------------------------- #
+SCRIPT_RE = re.compile(
+    r'<script[^>]*id="(?:__PWS_DATA__|initial-state|__PWS_INITIAL_PROPS__)"[^>]*>(.*?)</script>',
+    re.S,
+)
+
+
+def bootstrap_session(source_url: str) -> str:
+    """Load the board page: picks up session/CSRF cookies, returns the HTML."""
+    global _csrf
+    html = fetch(
+        BASE + source_url,
+        headers={
+            "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8",
+            "Referer": BASE + "/",
+            "Upgrade-Insecure-Requests": "1",
+        },
+    ).decode("utf-8", "replace")
+    _csrf = cookie_value("csrftoken") or _csrf
+    if DEBUG:
+        names = sorted(c.name for c in _jar or [])
+        print(f"    [debug] cookies: {names}  csrf={'yes' if _csrf else 'no'}", file=sys.stderr)
+    return html
+
+
+def walk(node):
+    """Yield every dict nested anywhere inside a JSON structure."""
+    stack = [node]
+    while stack:
+        cur = stack.pop()
+        if isinstance(cur, dict):
+            yield cur
+            stack.extend(cur.values())
+        elif isinstance(cur, list):
+            stack.extend(cur)
+
+
+def json_blobs(html: str):
+    for match in SCRIPT_RE.finditer(html):
+        try:
+            yield json.loads(match.group(1))
+        except (ValueError, TypeError):
+            continue
+
+
+def scrape_html(html: str, slug: str) -> tuple[str | None, list[dict], str | None]:
+    """Pull (board_id, pins, bookmark) out of the board page's embedded JSON."""
+    board_id: str | None = None
+    bookmark: str | None = None
+    pins: dict[str, dict] = {}
+
+    for blob in json_blobs(html):
+        for node in walk(blob):
+            if not board_id:
+                is_board = node.get("type") == "board" or "pin_count" in node
+                if is_board and node.get("slug") == slug and node.get("id"):
+                    board_id = str(node["id"])
+            if not bookmark:
+                mark = node.get("bookmark")
+                if isinstance(mark, str) and mark and mark != "-end-":
+                    bookmark = mark
+            pid = node.get("id")
+            looks_like_pin = node.get("type") in (None, "pin") and (
+                "images" in node or "carousel_data" in node or "story_pin_data" in node
+            )
+            if looks_like_pin and isinstance(pid, (str, int)):
+                pid = str(pid)
+                if pid.isdigit() and pid not in pins and pin_image_urls(node):
+                    pins[pid] = node
+
+    return board_id, list(pins.values()), bookmark
+
+
 def parse_board_url(url: str) -> tuple[str, str]:
     """https://www.pinterest.com/<user>/<board>/ -> ('user', 'board')."""
     path = urllib.parse.urlparse(url).path if "://" in url else url
@@ -122,15 +224,12 @@ def get_board_id(username: str, slug: str, source_url: str) -> str:
     )
     board = data.get("resource_response", {}).get("data") or {}
     board_id = board.get("id")
-    if not board_id:
-        raise SystemExit(
-            "Could not read the board id. If the board is secret, pass --cookies."
+    if board_id:
+        print(
+            f"Board: {board.get('name', slug)}  "
+            f"({board.get('pin_count', '?')} pins, id {board_id})"
         )
-    print(
-        f"Board: {board.get('name', slug)}  "
-        f"({board.get('pin_count', '?')} pins, id {board_id})"
-    )
-    return board_id
+    return str(board_id) if board_id else None
 
 
 def _size_of(key: str, entry: dict) -> int:
@@ -195,15 +294,43 @@ def pin_image_urls(pin: dict) -> list[str]:
     return out
 
 
-def iter_pins(board_id: str, source_url: str, limit: int | None):
-    """Yield pin dicts, walking the board feed page by page."""
-    bookmark: str | None = None
+def iter_pins(board_id, source_url, limit, seed_pins=None, seed_bookmark=None):
+    """Yield pin dicts: page-embedded pins first, then the paged board feed."""
     seen_ids: set[str] = set()
+    api_ok = True
+
+    for pin in seed_pins or []:
+        pid = str(pin.get("id") or "")
+        if pid and pid in seen_ids:
+            continue
+        if pid:
+            seen_ids.add(pid)
+        yield pin
+        if limit and len(seen_ids) >= limit:
+            return
+
+    if not board_id:
+        return
+
+    bookmark = seed_bookmark
     while True:
         options = {"board_id": board_id, "page_size": PAGE_SIZE, "field_set_key": "react_grid_pin"}
         if bookmark:
             options["bookmarks"] = [bookmark]
-        payload = api_get("BoardFeedResource", options, source_url)
+        try:
+            payload = api_get("BoardFeedResource", options, source_url)
+        except urllib.error.HTTPError as exc:
+            api_ok = False
+            print(
+                f"  Board feed returned HTTP {exc.code}; keeping the "
+                f"{len(seen_ids)} pin(s) read from the page itself.",
+                file=sys.stderr,
+            )
+            break
+        except Exception as exc:  # noqa: BLE001 - network trouble, keep what we have
+            api_ok = False
+            print(f"  Board feed failed ({exc}); keeping {len(seen_ids)} pin(s).", file=sys.stderr)
+            break
 
         rr = payload.get("resource_response", {})
         batch = rr.get("data") or []
@@ -227,8 +354,16 @@ def iter_pins(board_id: str, source_url: str, limit: int | None):
             marks = (payload.get("resource", {}).get("options", {}) or {}).get("bookmarks") or []
             bookmark = marks[0] if marks else None
         if not batch or not bookmark or bookmark == "-end-":
-            return
+            break
         time.sleep(SLEEP_BETWEEN_PAGES)
+
+    if not api_ok and not _csrf:
+        print(
+            "  Tip: a logged-in session usually unblocks the full board - export "
+            "cookies for pinterest.com to cookies.txt and re-run with "
+            "--cookies cookies.txt",
+            file=sys.stderr,
+        )
 
 
 # --------------------------------------------------------------------------- #
@@ -293,8 +428,17 @@ def main() -> int:
     ap.add_argument("-j", "--jobs", type=int, default=4, help="parallel downloads")
     ap.add_argument("--no-originals", action="store_true", help="skip originals upgrade")
     ap.add_argument("--cookies", help="Netscape cookies.txt for private boards")
+    ap.add_argument(
+        "--cookie-header",
+        help='raw Cookie header copied from your browser, e.g. "csrftoken=..; _pinterest_sess=.."',
+    )
     ap.add_argument("--manifest", action="store_true", help="write manifest.json")
+    ap.add_argument("--debug", action="store_true", help="print HTTP details on failure")
     args = ap.parse_args()
+
+    global DEBUG, _cookie_header
+    DEBUG = args.debug
+    _cookie_header = args.cookie_header or None
 
     if args.cookies and not os.path.exists(os.path.expanduser(args.cookies)):
         print(f"Cookies file not found: {args.cookies}", file=sys.stderr)
@@ -308,25 +452,42 @@ def main() -> int:
     print(f"Saving to: {out_dir}")
 
     try:
-        board_id = get_board_id(username, slug, source_url)
+        html = bootstrap_session(source_url)
     except urllib.error.HTTPError as exc:
-        if exc.code == 403:
+        if exc.code == 404:
+            print(f"Board not found: {BASE}{source_url}", file=sys.stderr)
+        elif exc.code == 403:
             print(
-                "Pinterest returned 403. That usually means the board is secret, or "
-                "Pinterest is rate-limiting this IP.\n"
+                "Pinterest returned 403 for the board page itself. The board is "
+                "probably secret, or this IP is rate-limited.\n"
                 "  - Secret board: export cookies for pinterest.com to cookies.txt "
                 "and re-run with --cookies cookies.txt\n"
                 "  - Rate limit: wait a few minutes and try again.",
                 file=sys.stderr,
             )
-        elif exc.code == 404:
-            print(f"Board not found: {BASE}{source_url}", file=sys.stderr)
         else:
-            print(f"Pinterest returned HTTP {exc.code}.", file=sys.stderr)
+            print(f"Could not load the board page: HTTP {exc.code}.", file=sys.stderr)
         return 1
 
+    html_board_id, seed_pins, seed_bookmark = scrape_html(html, slug)
+    if seed_pins:
+        print(f"Read {len(seed_pins)} pin(s) from the board page.")
+
+    board_id = None
+    try:
+        board_id = get_board_id(username, slug, source_url)
+    except urllib.error.HTTPError as exc:
+        if DEBUG:
+            print(f"    [debug] BoardResource HTTP {exc.code}", file=sys.stderr)
+    except Exception:  # noqa: BLE001 - fall back to the scraped id
+        pass
+    board_id = board_id or html_board_id
+    if not board_id:
+        print("Could not determine the board id; using page pins only.", file=sys.stderr)
+
     jobs: list[tuple[str, str, dict]] = []  # (url, dest, pin)
-    for index, pin in enumerate(iter_pins(board_id, source_url, args.limit), start=1):
+    pin_iter = iter_pins(board_id, source_url, args.limit, seed_pins, seed_bookmark)
+    for index, pin in enumerate(pin_iter, start=1):
         urls = pin_image_urls(pin)
         if not urls:
             continue
@@ -335,8 +496,9 @@ def main() -> int:
             jobs.append((url, os.path.join(out_dir, safe_name(index, pin_id, url, part)), pin))
 
     if not jobs:
-        print("No images found. The board may be empty, secret (try --cookies), "
-              "or Pinterest changed its feed format.", file=sys.stderr)
+        print("No images found. The board may be empty, secret (try --cookies "
+              "cookies.txt), or Pinterest changed its page format. Re-run with "
+              "--debug for HTTP details.", file=sys.stderr)
         return 1
 
     print(f"Found {len(jobs)} image(s). Downloading with {args.jobs} workers...")

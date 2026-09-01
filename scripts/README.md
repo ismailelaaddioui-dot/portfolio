@@ -19,8 +19,22 @@ python3 scripts/pinterest_board_download.py \
 | `-n, --limit N` | Stop after N pins — handy for a quick test run |
 | `-j, --jobs N` | Parallel downloads (default 4) |
 | `--manifest` | Also write `manifest.json` with title, description, source link per image |
-| `--cookies FILE` | Netscape `cookies.txt`, needed only for secret boards |
+| `--cookies FILE` | Netscape `cookies.txt` |
+| `--cookie-header STR` | Raw `Cookie:` header pasted from your browser — easier than a cookies.txt |
+| `--debug` | Print HTTP status details when something fails |
 | `--no-originals` | Skip the full-resolution upgrade attempt |
+
+### How it gets the pins
+
+1. Loads the board page once, which supplies Pinterest's session and CSRF
+   cookies, and scrapes the pins embedded in that page's JSON.
+2. Replays those cookies against the internal `BoardFeedResource` endpoint to
+   page through the rest of the board.
+
+Step 2 is undocumented and Pinterest answers it with 403 for some IPs and
+sessions. When that happens the script keeps everything from step 1 and says
+how many pins it salvaged. Supplying a logged-in session via `--cookie-header`
+or `--cookies` almost always unblocks the full board.
 
 ### What it does
 
